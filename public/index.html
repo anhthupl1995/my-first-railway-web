@@ -2,158 +2,33 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cộng trừ trong phạm vi 5</title>
-<style>
-  :root {
-    --ink: #2b2b2b;
-    --box: #5aa9e6;
-    --ok: #3fae4a;
-    --bad: #e0483e;
-    --paper: #ffffff;
-    --ground: #f3f7fb;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; background: var(--ground); color: var(--ink);
-    font-family: "Segoe UI", Arial, sans-serif;
-    display: flex; flex-direction: column; align-items: center; padding: 24px 16px;
-  }
-  h1 { font-size: 24px; margin: 0 0 4px; text-align: center; }
-  .sub { color: #667; margin: 0 0 20px; text-align: center; }
-  .sheet {
-    background: var(--paper); border-radius: 16px; padding: 28px 32px;
-    box-shadow: 0 4px 18px rgba(0,0,0,.06); width: 100%; max-width: 560px;
-  }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 40px; }
-  .eq {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 34px; font-weight: 300; font-variant-numeric: tabular-nums; white-space: nowrap;
-  }
-  .eq input {
-    width: 46px; height: 46px; border: 2px solid var(--box); border-radius: 4px;
-    font: inherit; font-size: 30px; font-weight: 400; text-align: center; color: var(--ink);
-    padding: 0; background: #fff; outline: none;
-  }
-  .eq input:focus { box-shadow: 0 0 0 3px rgba(90,169,230,.3); }
-  .eq.ok input { border-color: var(--ok); background: #eef9ef; }
-  .eq.bad input { border-color: var(--bad); background: #fdeeed; }
-  .mark { width: 24px; font-size: 22px; }
-  .eq.ok .mark { color: var(--ok); }
-  .eq.bad .mark { color: var(--bad); }
-  .actions { display: flex; gap: 12px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
-  button {
-    border: none; border-radius: 10px; padding: 12px 22px; font-size: 16px; font-weight: 600; cursor: pointer;
-  }
-  .btn-check { background: var(--box); color: #fff; }
-  .btn-new { background: #e8edf2; color: var(--ink); }
-  .mode { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; flex-wrap: wrap; }
-  .mode button { padding: 8px 16px; font-size: 14px; background: #fff; border: 2px solid #d6e2ec; }
-  .mode button[aria-pressed="true"] { border-color: var(--box); color: #1f6fae; background: #eaf4fc; }
-  .result { text-align: center; font-size: 18px; margin-top: 18px; min-height: 26px; font-weight: 600; }
-  @media (max-width: 480px) {
-    .sheet { padding: 20px 16px; }
-    .grid { gap: 20px 12px; }
-    .eq { font-size: 26px; gap: 5px; }
-    .eq input { width: 38px; height: 38px; font-size: 24px; }
-    .mark { width: 16px; font-size: 16px; }
-  }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bé Vui Học</title>
+<meta name="description" content="Bài tập và trò chơi cho bé 2–6 tuổi: Tiếng Việt, Toán, Tiếng Anh">
+<meta name="theme-color" content="#FFF8EE">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Cộng trừ trong phạm vi 5</h1>
-  <p class="sub">Điền số thích hợp vào ô trống</p>
+  <header class="topbar">
+    <a class="logo" href="#/"><span class="logo-icon" aria-hidden="true">🌈</span><span class="logo-text">Bé Vui Học</span></a>
+    <nav class="topnav" id="topnav" aria-label="Môn học"></nav>
+    <button class="icon-btn" id="sound" type="button" aria-label="Âm thanh" aria-pressed="true">🔊</button>
+    <label class="age-pick"><span class="sr-only">Độ tuổi của bé</span><select id="age"></select></label>
+  </header>
 
-  <div class="mode" role="group" aria-label="Loại phép tính">
-    <button type="button" data-mode="mix" aria-pressed="true">Cộng và trừ</button>
-    <button type="button" data-mode="add" aria-pressed="false">Chỉ cộng</button>
-    <button type="button" data-mode="sub" aria-pressed="false">Chỉ trừ</button>
-  </div>
+  <main id="app"></main>
 
-  <main class="sheet">
-    <div class="grid" id="grid"></div>
-    <div class="result" id="result" role="status"></div>
-    <div class="actions">
-      <button type="button" class="btn-check" id="check">Kiểm tra</button>
-      <button type="button" class="btn-new" id="new">Bài mới</button>
-    </div>
-  </main>
+  <nav class="tabbar" id="tabbar" aria-label="Điều hướng"></nav>
 
-<script>
-  var MAX = 5, COUNT = 10, mode = "mix", problems = [];
-
-  function rand(n) { return Math.floor(Math.random() * (n + 1)); } // 0..n
-
-  function makeProblem() {
-    var op = mode === "mix" ? (Math.random() < 0.5 ? "+" : "-") : mode === "add" ? "+" : "-";
-    var a, b;
-    if (op === "+") { a = rand(MAX); b = rand(MAX - a); }   // a + b <= 5
-    else { a = rand(MAX); b = rand(a); }                    // a - b >= 0
-    return { a: a, b: b, op: op, ans: op === "+" ? a + b : a - b };
-  }
-
-  function newSheet() {
-    problems = [];
-    var seen = {};
-    while (problems.length < COUNT) {
-      var p = makeProblem(), key = p.a + p.op + p.b;
-      if (seen[key] && Object.keys(seen).length < 20) continue; // tránh trùng khi có thể
-      seen[key] = true; problems.push(p);
-    }
-    // Xếp theo cột như phiếu bài tập: cột trái 5 bài, cột phải 5 bài
-    var html = "";
-    for (var r = 0; r < COUNT / 2; r++) {
-      [r, r + COUNT / 2].forEach(function (i) {
-        var p = problems[i];
-        html += '<label class="eq" id="eq' + i + '">' + p.a + ' ' + (p.op === "-" ? "−" : "+") + ' ' + p.b + ' =' +
-          '<input type="text" inputmode="numeric" maxlength="1" data-i="' + i + '" aria-label="' +
-          p.a + (p.op === "+" ? " cộng " : " trừ ") + p.b + ' bằng"><span class="mark"></span></label>';
-      });
-    }
-    document.getElementById("grid").innerHTML = html;
-    document.getElementById("result").textContent = "";
-    document.querySelector('#grid input').focus();
-  }
-
-  function check() {
-    var right = 0;
-    problems.forEach(function (p, i) {
-      var row = document.getElementById("eq" + i), v = row.querySelector("input").value.trim();
-      var ok = v !== "" && +v === p.ans;
-      row.classList.toggle("ok", ok);
-      row.classList.toggle("bad", !ok);
-      row.querySelector(".mark").textContent = ok ? "✓" : "✗";
-      if (ok) right++;
-    });
-    document.getElementById("result").textContent = right === COUNT
-      ? "Tuyệt vời! Con làm đúng cả " + COUNT + " bài 🎉"
-      : "Con làm đúng " + right + "/" + COUNT + " bài. Sửa lại các ô màu đỏ nhé!";
-  }
-
-  document.getElementById("grid").addEventListener("input", function (e) {
-    var t = e.target;
-    t.value = t.value.replace(/\D/g, "").slice(0, 1);
-    var row = t.closest(".eq");
-    row.classList.remove("ok", "bad"); row.querySelector(".mark").textContent = "";
-    if (t.value) { // tự chuyển sang ô kế tiếp
-      var next = document.querySelector('#grid input[data-i="' + (+t.dataset.i + 1) + '"]');
-      if (next) next.focus();
-    }
-  });
-  document.getElementById("grid").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") check();
-  });
-  document.getElementById("check").addEventListener("click", check);
-  document.getElementById("new").addEventListener("click", newSheet);
-  document.querySelectorAll("[data-mode]").forEach(function (b) {
-    b.addEventListener("click", function () {
-      mode = b.dataset.mode;
-      document.querySelectorAll("[data-mode]").forEach(function (x) { x.setAttribute("aria-pressed", x === b); });
-      newSheet();
-    });
-  });
-
-  newSheet();
-</script>
+  <script src="js/core.js"></script>
+  <script src="js/games/math.js"></script>
+  <script src="js/games/vietnamese.js"></script>
+  <script src="js/games/english.js"></script>
+  <script src="js/sheets/vietnamese.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
