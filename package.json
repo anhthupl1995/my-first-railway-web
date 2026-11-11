@@ -1,0 +1,12 @@
+{
+  "name": "my-first-railway-web",
+  "version": "1.0.0",
+  "description": "Luyện cộng trừ trong phạm vi 5",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
