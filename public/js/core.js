@@ -88,10 +88,12 @@
         <p>${o.text || `Bé làm đúng ngay lần đầu <b>${o.score}/${o.total}</b> câu.`}</p>
         <div class="actions">
           <button type="button" class="btn btn-main" data-again>${o.againLabel || "Chơi lại"}</button>
+          ${o.renew ? `<button type="button" class="btn btn-main" data-renew>${o.renewLabel || "Làm mới"}</button>` : ""}
           <a class="btn btn-soft" href="#/mon/${sid}">Chọn bài khác</a>
         </div>
       </div>`;
     el.querySelector("[data-again]").addEventListener("click", o.again);
+    if (o.renew) el.querySelector("[data-renew]").addEventListener("click", o.renew);
     App.sfx(true);
   };
 

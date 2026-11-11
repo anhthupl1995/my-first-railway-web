@@ -56,12 +56,7 @@
           <span class="subject-icon" aria-hidden="true">${s.emoji}</span>
           <div><h3>${s.name}</h3><p>${s.desc}</p><span class="pill">${n} trò chơi cho bé ${App.AGES[age].label}</span></div>
         </a>`;
-      }).join("")}</div>
-      <a class="print-promo" style="${vars(SHEET_COLORS)}" href="#/phieu">
-        <span class="subject-icon" aria-hidden="true">📄</span>
-        <div><h3>Kho phiếu bài tập in A4</h3><p>Xem trước, in hoặc lưu PDF để bé làm bài trên giấy.</p></div>
-        <span class="promo-go" aria-hidden="true">→</span>
-      </a>`;
+      }).join("")}</div>`;
     main.querySelector(".ages").addEventListener("click", (e) => {
       const b = e.target.closest("[data-age]"); if (b) { App.setAge(+b.dataset.age); render(true); }
     });
@@ -70,7 +65,6 @@
   function subject(s) {
     const age = App.getAge(), all = App.topicsOf(s.id);
     const fit = all.filter((t) => t.ages.includes(age)), other = all.filter((t) => !t.ages.includes(age));
-    const sheets = App.sheetsOf(s.id);
     main.innerHTML = `
       <a class="crumb" href="#/">← Trang chủ</a>
       <div class="page-head" style="${vars(s)}">
@@ -79,7 +73,6 @@
       </div>
       ${fit.length ? `<div class="cards">${fit.map((t) => topicCard(t, s)).join("")}</div>`
         : `<p class="empty-note">Chưa có bài ${s.name} cho bé ${App.AGES[age].label}. Bé thử các bài bên dưới nhé!</p>`}
-      ${sheets.length ? `<section class="other-plain"><h2 class="section-title">📄 Phiếu in A4 môn ${s.name}</h2><div class="cards">${sheets.map(sheetCard).join("")}</div></section>` : ""}
       ${other.length ? `<section class="other"><h2 class="section-title">Dành cho độ tuổi khác</h2><div class="cards">${other.map((t) => topicCard(t, s)).join("")}</div></section>` : ""}`;
   }
 
@@ -209,6 +202,20 @@
     });
     window.scrollTo(0, keepScroll ? y : 0);
   }
+
+  // Đếm lượt truy cập: mỗi phiên trình duyệt (tab) chỉ tính 1 lượt; các lần tải lại chỉ đọc số.
+  (function visitCounter() {
+    let counted = false;
+    try { counted = sessionStorage.getItem("visited") === "1"; } catch (e) { /* storage blocked */ }
+    fetch("/api/visits", { method: counted ? "GET" : "POST" })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        try { sessionStorage.setItem("visited", "1"); } catch (e) { /* ignore */ }
+        document.getElementById("visits-n").textContent = Number(d.total).toLocaleString("vi-VN");
+        document.getElementById("visits").hidden = false;
+      })
+      .catch(() => { /* không có server (mở file trực tiếp) – ẩn bộ đếm */ });
+  })();
 
   window.addEventListener("hashchange", () => render(false));
   render(false);
