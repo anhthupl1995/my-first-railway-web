@@ -95,6 +95,77 @@
     App.sfx(true);
   };
 
+  // ---------- Matching engine (nối trên màn hình) ----------
+  // opts: { boards, prompt, make() -> [{ l: {em, name}, r: {em, name} }] }
+  // Bé chạm một hình bên trái và một hình bên phải; đúng thì hiện đường nối.
+  App.matchGame = (el, opts) => {
+    const total = opts.boards || 3;
+    let b = 0, score = 0, count = 0, pairs, sel, mistakes, lines;
+    const box = document.createElement("div");
+    el.innerHTML = ""; el.appendChild(box);
+    const say = () => App.speak(opts.prompt.replace(/<[^>]+>/g, ""), "vi-VN");
+    const item = (side, i, x) =>
+      `<button type="button" class="mg-item" data-side="${side}" data-i="${i}" aria-pressed="false">` +
+      `<span class="mg-em" aria-hidden="true">${x.em}</span><span class="mg-name">${x.name}</span></button>`;
+
+    function next() {
+      if (b >= total) return App.finish(el, { score, total: count, text: `Bé nối đúng ngay lần đầu <b>${score}/${count}</b> cặp.`, again: () => App.matchGame(el, opts) });
+      pairs = opts.make(); sel = { l: null, r: null }; mistakes = pairs.map(() => 0); lines = [];
+      const order = App.derange(pairs.length);
+      const right = Array(pairs.length); order.forEach((row, i) => (right[row] = i));
+      box.innerHTML = `
+        <div class="quiz">
+          <div class="progress"><span style="width:${(b / total) * 100}%"></span></div>
+          <div class="q-count">Lượt ${b + 1}/${total}</div>
+          <div class="q-prompt"><p class="q-text">${opts.prompt}</p>${App.canSpeak ? '<button class="speak" type="button" data-say aria-label="Nghe hướng dẫn">🔊</button>' : ""}</div>
+          <div class="mg-board">
+            <svg class="mg-lines" aria-hidden="true"></svg>
+            <div class="mg-col mg-left">${pairs.map((p, i) => item("l", i, p.l)).join("")}</div>
+            <div class="mg-col mg-right">${right.map((i) => item("r", i, pairs[i].r)).join("")}</div>
+          </div>
+          <p class="q-feedback" role="status"></p>
+        </div>`;
+      new ResizeObserver(drawLines).observe(box.querySelector(".mg-board"));
+      say();
+    }
+
+    function drawLines() {
+      const board = box.querySelector(".mg-board"); if (!board) return;
+      const svg = board.querySelector(".mg-lines"), br = board.getBoundingClientRect();
+      svg.setAttribute("viewBox", `0 0 ${br.width} ${br.height}`);
+      svg.innerHTML = lines.map((i) => {
+        const a = board.querySelector(`[data-side="l"][data-i="${i}"]`).getBoundingClientRect();
+        const c = board.querySelector(`[data-side="r"][data-i="${i}"]`).getBoundingClientRect();
+        return `<line x1="${a.right - br.left + 2}" y1="${a.top + a.height / 2 - br.top}" x2="${c.left - br.left - 2}" y2="${c.top + c.height / 2 - br.top}"/>`;
+      }).join("");
+    }
+
+    box.addEventListener("click", (e) => {
+      if (e.target.closest("[data-say]")) { say(); return; }
+      const it = e.target.closest(".mg-item");
+      if (!it || it.classList.contains("done")) return;
+      const side = it.dataset.side, i = +it.dataset.i, fb = box.querySelector(".q-feedback");
+      App.speak(pairs[i][side].name, "vi-VN");
+      sel[side] = sel[side] === i ? null : i;
+      if (sel.l !== null && sel.r !== null) {
+        const L = sel.l, R = sel.r, lb = box.querySelector(`[data-side="l"][data-i="${L}"]`), rb = box.querySelector(`[data-side="r"][data-i="${R}"]`);
+        sel = { l: null, r: null };
+        if (L === R) {
+          lb.classList.add("done"); rb.classList.add("done"); lines.push(L); drawLines();
+          count++; if (!mistakes[L]) score++;
+          fb.className = "q-feedback ok"; fb.textContent = App.pick(App.PRAISE); App.sfx(true);
+          if (lines.length === pairs.length) setTimeout(() => { b++; next(); }, 1400);
+        } else {
+          mistakes[L]++;
+          [lb, rb].forEach((x) => { x.classList.remove("shake"); void x.offsetWidth; x.classList.add("shake"); setTimeout(() => x.classList.remove("shake"), 600); });
+          fb.className = "q-feedback bad"; fb.textContent = "Chưa đúng rồi, bé thử lại nhé!"; App.sfx(false);
+        }
+      }
+      box.querySelectorAll(".mg-item").forEach((x) => x.setAttribute("aria-pressed", sel[x.dataset.side] === +x.dataset.i));
+    });
+    next();
+  };
+
   // ---------- Quiz engine ----------
   // opts.make(i) returns { prompt, options: [{ html, ok }], say?: [text, lang], after?: [text, lang], optClass? }
   App.quiz = (el, opts) => {
@@ -111,7 +182,7 @@
           <div class="progress"><span style="width:${(i / total) * 100}%"></span></div>
           <div class="q-count">Câu ${i + 1}/${total}</div>
           <div class="q-prompt">${round.prompt}${round.say && App.canSpeak ? '<button class="speak" type="button" data-say aria-label="Nghe lại">🔊</button>' : ""}</div>
-          <div class="q-options ${round.optClass || ""}">${round.options.map((o, k) => `<button type="button" class="opt" data-k="${k}">${o.html}</button>`).join("")}</div>
+          <div class="q-options ${round.optClass || ""}" style="--k:${round.options.length}">${round.options.map((o, k) => `<button type="button" class="opt" data-k="${k}">${o.html}</button>`).join("")}</div>
           <p class="q-feedback" role="status"></p>
         </div>`;
       if (round.say && opts.autoSay) App.speak(...round.say);

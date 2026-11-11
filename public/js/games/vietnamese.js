@@ -27,6 +27,42 @@
     }
   });
 
+  // ---------- Nối con vật (2–4 tuổi): nơi ở, thức ăn ----------
+  const matchTopic = (id, name, emoji, desc, key, prompt) => register({
+    id, subject: "tieng-viet", name, emoji, desc, ages: [0, 1],
+    mount(el, ctx) {
+      const n = ctx.age === 0 ? 3 : 4;
+      App.matchGame(el, { boards: ctx.age === 0 ? 3 : 4, prompt, make: () => App.uniquePairs(App.DATA[key], n) });
+    }
+  });
+  matchTopic("noi-o-con-vat", "Con vật sống ở đâu?", "🏡", "Nối mỗi con vật với nơi ở của nó", "homes", "Bé nối mỗi con vật với nơi ở của nó nhé!");
+  matchTopic("thuc-an-con-vat", "Con vật ăn gì?", "🥕", "Nối mỗi con vật với thức ăn nó thích", "foods", "Bé nối mỗi con vật với thức ăn nó thích nhé!");
+
+  // ---------- Trắc nghiệm con vật (2–4 tuổi): chọn nơi ở / thức ăn ----------
+  const choiceTopic = (id, name, emoji, desc, key, ask) => register({
+    id, subject: "tieng-viet", name, emoji, desc, ages: [0, 1],
+    mount(el, ctx) {
+      const k = ctx.age === 0 ? 2 : 3, all = App.DATA[key];
+      let deck = [];
+      quiz(el, {
+        rounds: ctx.age === 0 ? 6 : 8, autoSay: true,
+        make() {
+          if (!deck.length) deck = shuffle(all); // không lặp con vật cho tới khi hết lượt
+          const p = deck.pop(), question = ask(p.l.name);
+          return {
+            prompt: `<div class="big-emoji" aria-hidden="true">${p.l.em}</div><p class="q-text">${question}</p>`,
+            say: [question, "vi-VN"], after: [p.r.name, "vi-VN"], optClass: "pic-opts",
+            options: App.choiceOptions(all, p, k).map((o) => ({ html: `<span class="emoji-opt">${o.em}</span><span class="opt-name">${o.name}</span>`, ok: o.ok }))
+          };
+        }
+      });
+    }
+  });
+  choiceTopic("chon-noi-o", "Chọn nơi ở cho con vật", "🏠", "Nhìn con vật, chạm vào nơi ở đúng của nó", "homes",
+    (n) => `${n[0].toUpperCase() + n.slice(1)} sống ở đâu?`);
+  choiceTopic("chon-thuc-an", "Chọn thức ăn cho con vật", "🍽️", "Nhìn con vật, chạm vào thức ăn nó thích", "foods",
+    (n) => `${n[0].toUpperCase() + n.slice(1)} thích ăn gì?`);
+
   // ---------- Điền chữ còn thiếu ----------
   const WORDS = [["cá", "🐟"], ["gà", "🐔"], ["mèo", "🐱"], ["chó", "🐶"], ["bò", "🐮"], ["hoa", "🌸"], ["cam", "🍊"],
     ["nhà", "🏠"], ["xe", "🚗"], ["bé", "👶"], ["sao", "⭐"], ["cây", "🌳"], ["táo", "🍎"], ["ong", "🐝"], ["voi", "🐘"],
