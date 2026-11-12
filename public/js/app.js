@@ -63,8 +63,7 @@
   }
 
   function subject(s) {
-    const age = App.getAge(), all = App.topicsOf(s.id);
-    const fit = all.filter((t) => t.ages.includes(age)), other = all.filter((t) => !t.ages.includes(age));
+    const age = App.getAge(), fit = App.topicsOf(s.id).filter((t) => t.ages.includes(age));
     main.innerHTML = `
       <a class="crumb" href="#/">← Trang chủ</a>
       <div class="page-head" style="${vars(s)}">
@@ -72,8 +71,7 @@
         <div><h1>${s.name}</h1><p>Bài tập cho bé ${App.AGES[age].label}</p></div>
       </div>
       ${fit.length ? `<div class="cards">${fit.map((t) => topicCard(t, s)).join("")}</div>`
-        : `<p class="empty-note">Chưa có bài ${s.name} cho bé ${App.AGES[age].label}. Bé thử các bài bên dưới nhé!</p>`}
-      ${other.length ? `<section class="other"><h2 class="section-title">Dành cho độ tuổi khác</h2><div class="cards">${other.map((t) => topicCard(t, s)).join("")}</div></section>` : ""}`;
+        : `<p class="empty-note">Chưa có bài ${s.name} cho bé ${App.AGES[age].label}. Bài mới sẽ sớm được bổ sung!</p>`}`;
   }
 
   function play(s, t) {
@@ -93,7 +91,7 @@
   // ---------- Worksheet library ----------
   function library(s) {
     const age = App.getAge(), all = App.sheetsOf(s && s.id);
-    const fit = all.filter((x) => x.ages.includes(age)), other = all.filter((x) => !x.ages.includes(age));
+    const fit = all.filter((x) => x.ages.includes(age));
     main.innerHTML = `
       <a class="crumb" href="#/">← Trang chủ</a>
       <div class="page-head" style="${vars(SHEET_COLORS)}">
@@ -105,8 +103,7 @@
         ${App.SUBJECTS.map((x) => `<a class="chip" href="#/phieu/${x.id}" aria-pressed="${!!s && s.id === x.id}">${x.emoji} ${x.name}</a>`).join("")}
       </div>
       ${fit.length ? `<div class="cards">${fit.map(sheetCard).join("")}</div>`
-        : `<p class="empty-note">Chưa có phiếu ${s ? s.name + " " : ""}cho bé ${App.AGES[age].label}. Phiếu mới sẽ sớm được bổ sung!</p>`}
-      ${other.length ? `<section class="other"><h2 class="section-title">Dành cho độ tuổi khác</h2><div class="cards">${other.map(sheetCard).join("")}</div></section>` : ""}`;
+        : `<p class="empty-note">Chưa có phiếu ${s ? s.name + " " : ""}cho bé ${App.AGES[age].label}. Phiếu mới sẽ sớm được bổ sung!</p>`}`;
   }
 
   function sheetView(s, sh) {
