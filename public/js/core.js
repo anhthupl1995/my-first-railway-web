@@ -13,7 +13,8 @@
   App.SUBJECTS = [
     { id: "tieng-viet", name: "Tiếng Việt", emoji: "📖", c: "#F2994A", t: "#FFF1E4", d: "#A4500E", desc: "Chữ cái, ghép chữ" },
     { id: "toan", name: "Toán", emoji: "🔢", c: "#2F80ED", t: "#E8F1FD", d: "#1B5FC1", desc: "Đếm số, cộng trừ, so sánh" },
-    { id: "tieng-anh", name: "Tiếng Anh", emoji: "🌍", c: "#27AE60", t: "#E6F6EC", d: "#1A7A43", desc: "Từ vựng, tìm chữ, tô màu" }
+    { id: "tieng-anh", name: "Tiếng Anh", emoji: "🌍", c: "#27AE60", t: "#E6F6EC", d: "#1A7A43", desc: "Từ vựng, tìm chữ, tô màu" },
+    { id: "tu-duy", name: "Tư duy", emoji: "🧩", c: "#0EA5A4", t: "#E0F7F6", d: "#0B7A79", desc: "Mê cung, tìm bóng, quy luật" }
   ];
 
   // Số câu mỗi lượt chơi – áp dụng cho MỌI bài (kể cả bài thêm sau này).
