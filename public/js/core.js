@@ -100,6 +100,21 @@
     el.querySelector("[data-again]").addEventListener("click", o.again);
     el.querySelector("[data-renew]").addEventListener("click", o.renew);
     App.sfx(true);
+    App.celebrate();
+  };
+
+  // ---------- Chúc mừng cuối lượt: ngựa chạy ngang, hoặc thỏ nhảy vào tặng hoa ----------
+  // Lớp phủ không chặn chạm (pointer-events: none) nên bé vẫn bấm được các nút bên dưới.
+  App.celebrate = () => {
+    document.querySelectorAll(".celebrate").forEach((x) => x.remove());
+    const horse = Math.random() < 0.5, box = document.createElement("div");
+    box.className = "celebrate " + (horse ? "cel-horse" : "cel-bunny");
+    box.setAttribute("aria-hidden", "true");
+    box.innerHTML = horse
+      ? `<div class="cel-run"><span class="cel-bob">🐎</span><span class="cel-dust">💨</span></div>`
+      : `<div class="cel-run"><span class="cel-bubble">Tặng bé nè! 💐</span><span class="cel-bob"><span class="cel-flower">💐</span>🐇</span></div>`;
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), horse ? 3600 : 5200);
   };
 
   // ---------- Matching engine (nối trên màn hình) ----------

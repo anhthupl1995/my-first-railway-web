@@ -364,3 +364,32 @@ a.chip { text-decoration: none; }
 /* Phép tính cộng / trừ */
 .calc { font-size: clamp(56px, 15vw, 88px); font-weight: 800; line-height: 1.1; color: #1B5FC1; background: #E8F1FD; border-radius: 24px; padding: 10px 28px; white-space: nowrap; }
 .calc-q { display: inline-block; min-width: .9em; border-bottom: 5px dashed #2F80ED; color: #2F80ED; text-align: center; }
+
+/* ---------- Chúc mừng cuối lượt ---------- */
+.celebrate { position: fixed; left: 0; right: 0; bottom: calc(90px + env(safe-area-inset-bottom, 0px)); height: 160px; pointer-events: none; z-index: 50; overflow: hidden; }
+.cel-run { position: absolute; left: 0; bottom: 0; display: flex; align-items: flex-end; gap: 4px; will-change: transform; }
+.cel-bob { display: inline-block; font-size: clamp(72px, 18vw, 110px); line-height: 1; position: relative; }
+/* Ngựa: phi từ phải sang trái (hình con ngựa quay mặt sang trái), vừa chạy vừa nhún */
+.cel-horse .cel-run { animation: cel-across 3.4s linear forwards; }
+.cel-horse .cel-bob { animation: cel-gallop .32s ease-in-out infinite alternate; }
+.cel-dust { font-size: 40px; opacity: .7; animation: cel-gallop .32s ease-in-out infinite alternate-reverse; }
+/* Thỏ: nhảy vào giữa, dừng lại tặng hoa, rồi nhảy đi */
+.cel-bunny .cel-run { align-items: center; animation: cel-visit 5s ease-in-out forwards; }
+.cel-bunny .cel-bob { animation: cel-hop .5s cubic-bezier(.3, 0, .4, 1) infinite alternate; }
+.cel-flower { position: absolute; left: -.38em; bottom: .08em; font-size: .5em; transform: rotate(-18deg); }
+.cel-bubble { background: #fff; border: 3px solid #FFB547; border-radius: 18px; padding: 4px 14px; font-weight: 800; font-size: 20px; white-space: nowrap; order: 2; margin: 0 0 40px 4px; opacity: 0; animation: cel-bubble 5s ease-in-out forwards; box-shadow: 0 4px 12px rgba(0, 0, 0, .08); }
+@keyframes cel-across { from { transform: translateX(100vw); } to { transform: translateX(-260px); } }
+@keyframes cel-gallop { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-16px) rotate(3deg); } }
+@keyframes cel-hop { from { transform: translateY(0) scaleY(.92); } to { transform: translateY(-42px) scaleY(1.04); } }
+@keyframes cel-visit {
+  0% { transform: translateX(100vw); }
+  32%, 72% { transform: translateX(calc(50vw - 50%)); }
+  100% { transform: translateX(-260px); }
+}
+@keyframes cel-bubble { 0%, 30% { opacity: 0; } 36%, 70% { opacity: 1; } 76%, 100% { opacity: 0; } }
+@media (min-width: 900px) { .celebrate { bottom: 24px; } }
+@media (prefers-reduced-motion: reduce) {
+  .cel-run, .cel-bob, .cel-dust, .cel-bubble { animation: none !important; }
+  .cel-run { left: 50%; transform: translateX(-50%); }
+  .cel-bubble { opacity: 1; }
+}
