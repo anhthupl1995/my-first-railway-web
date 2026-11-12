@@ -254,7 +254,9 @@
         });
         el.querySelector(".pic").addEventListener("click", (e) => {
           const g = e.target.closest(".region"); if (!g) return;
-          const i = +g.dataset.i; if (filled[i]) return;
+          const i = +g.dataset.i;
+          App.speak(shapes[i][2], "en-US"); // chạm vào ô nào cũng đọc to tên màu ghi trong ô
+          if (filled[i]) return;
           if (!color) { msg.className = "color-msg bad"; msg.textContent = "Bé chọn màu trước nhé!"; return; }
           if (color === shapes[i][2]) {
             filled[i] = true; done++;

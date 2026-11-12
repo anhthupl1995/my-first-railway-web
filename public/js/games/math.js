@@ -26,7 +26,7 @@
     }
   });
 
-  // ---------- To nhất, nhỏ nhất (2–3 tuổi) ----------
+  // ---------- Tìm cái to nhất / nhỏ nhất (2–4 tuổi) ----------
   // [hình, tên, độ to ngoài đời 1–6]. Mỗi câu lấy 3 thứ CÙNG nhóm, độ to khác hẳn nhau, và vẽ to/nhỏ
   // đúng theo thứ tự đó – nên hình nhìn thấy và hiểu biết thực tế luôn cho cùng một đáp án.
   const SIZE_GROUPS = [
@@ -41,9 +41,10 @@
   ];
   const SIZE_PX = [44, 74, 112]; // nhỏ – vừa – to
 
-  register({
-    id: "to-nho", subject: "toan", name: "To nhất, nhỏ nhất", emoji: "🐘",
-    desc: "Chọn con vật, trái cây, rau củ to nhất hoặc nhỏ nhất", ages: [0, 1],
+  // Hai bài riêng (không trộn "to nhất" với "nhỏ nhất" trong một lượt để bé không bị rối)
+  const sizeTopic = (id, name, emoji, big) => register({
+    id, subject: "toan", name, emoji, ages: [0, 1],
+    desc: `Chọn con vật, trái cây, rau củ ${big ? "to nhất" : "nhỏ nhất"}`,
     mount(el) {
       quiz(el, {
         autoSay: true,
@@ -53,10 +54,10 @@
           let three;
           do { three = App.sample(g.items, 3); } while (new Set(three.map((x) => x[2])).size < 3);
           const order = three.slice().sort((a, b) => a[2] - b[2]); // nhỏ → to
-          const big = Math.random() < 0.5, ans = big ? order[2] : order[0];
-          const q = `${g.who} ${big ? "to nhất" : "nhỏ nhất"}?`;
+          const ans = big ? order[2] : order[0], word = big ? "to nhất" : "nhỏ nhất";
+          const q = `${g.who} ${word}?`;
           return {
-            prompt: `<p class="q-text">${q.replace(/(to nhất|nhỏ nhất)/, "<b>$1</b>")}</p>`,
+            prompt: `<p class="q-text">${g.who} <b>${word}</b>?</p>`,
             say: [q, "vi-VN"], after: [ans[1], "vi-VN"], optClass: "pic-opts size-opts",
             options: App.shuffle(three).map((x) => ({
               html: `<span class="size-em" style="font-size:${SIZE_PX[order.indexOf(x)]}px">${x[0]}</span><span class="opt-name">${x[1]}</span>`,
@@ -67,6 +68,8 @@
       });
     }
   });
+  sizeTopic("to-nhat", "Tìm cái to nhất", "🐘", true);
+  sizeTopic("nho-nhat", "Tìm cái nhỏ nhất", "🐭", false);
 
   // ---------- Cộng trừ (phiếu bài tập) ----------
   register({
