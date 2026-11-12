@@ -1,5 +1,5 @@
 // Tiếng Việt – Chọn hình đúng (4–6 tuổi)
-// Mỗi câu hiện một từ (vd: "ba"), bé chọn 1 trong 3 hình đúng với từ đó. Mỗi lượt 10 câu, 3 cấp độ
+// Mỗi câu hiện một từ (vd: "ba"), bé chọn 1 trong 3 hình đúng với từ đó. Mỗi lượt 10 câu, 4 cấp độ
 // dùng chung bộ từ với trò "Nối từ với hình" (App.WORD_LEVELS).
 (function () {
   const { register, shuffle } = App;
@@ -12,7 +12,7 @@
 
   register({
     id: "chon-hinh", subject: "tieng-viet", name: "Chọn hình đúng", emoji: "🖼️",
-    desc: "Đọc từ rồi chọn hình đúng – 3 cấp độ, mỗi lượt 10 câu", ages: [2, 3],
+    desc: "Đọc từ rồi chọn hình đúng – 4 cấp độ, mỗi lượt 10 câu", ages: [2, 3],
     mount(el) {
       let lvl = loadLevel(), deck = [];
       el.innerHTML = `
@@ -22,10 +22,7 @@
         <div class="cht-play"></div>`;
       const play = el.querySelector(".cht-play");
 
-      const wordHtml = (w) => {
-        const m = LEVELS[lvl].digraph && w.match(LEVELS[lvl].digraph);
-        return m ? `<b>${m[0]}</b>${w.slice(m[0].length)}` : w;
-      };
+      const wordHtml = (w) => App.wordHtml(LEVELS[lvl], w);
 
       // 2 hình sai: khác hình đáp án, không cùng nhóm dễ lẫn (mưa/mây, ngủ/giường…), không trùng nhau
       function wrongPics(x) {

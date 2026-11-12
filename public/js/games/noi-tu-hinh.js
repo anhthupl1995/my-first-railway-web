@@ -7,23 +7,40 @@
 
   // "từ hình [nhóm]" – các từ cùng nhóm trông/nghe dễ lẫn nên không bao giờ nằm chung một trang.
   const list = (s) => s.split(";").map((x) => { const [w, pic, g] = x.trim().split(/\s+/); return { w, pic, g }; });
+  const DIGRAPH = /^(ngh|ng|nh|ch|kh|ph|gh|th|tr|gi|qu)/;
+  // Có phải nguyên âm không (bỏ dấu thanh, giữ ă â ê ô ơ ư)
+  const isV = (c) => /[aăâeêioôơuưy]/.test(c.normalize("NFD").replace(/[̣̀́̃̉]/g, "").normalize("NFC"));
+  // digraph: âm đầu là phụ âm ghép (tô đậm); cluster: vần có nguyên âm đôi/ba (tô xanh)
   const LEVELS = [
-    { name: "Cấp 1", desc: "Tiếng đơn: một phụ âm + một nguyên âm (ba, bò, bê…)", items: list(`
+    { name: "Cấp 1", desc: "Phụ âm đơn + nguyên âm đơn (ba, bò, cá, mắt…)", items: list(`
       bà 👵; bố 👨; mẹ 👩 nu; cô 👩‍🏫 nu; bé 👶; ba 3; bò 🐄; bí 🎃; bơ 🥑; cá 🐟; cà 🍆; cỏ 🌿 la; lá 🍃 la;
       cờ 🚩; cú 🦉; dê 🐐; dế 🦗; đá 🪨; gà 🐔; gỗ 🪵; hổ 🐯; hề 🤡; lê 🍐; mũ 🧢; mì 🍜 to; tô 🥣 to; nơ 🎀;
-      ô ☂️; rổ 🧺; sò 🦪; vở 📒; vé 🎫; ví 👛; xe 🚗; xô 🪣; xu 🪙; lọ 🫙; đò 🛶`) },
-    { name: "Cấp 2", desc: "Vần ghép hai nguyên âm: ua, au, ưa, ai, ao, eo, oi, ui… (cua, rau, mưa…)", items: list(`
+      rổ 🧺; sò 🦪; vở 📒; vé 🎫; ví 👛; xe 🚗; xô 🪣; xu 🪙; lọ 🫙; đò 🛶; mắt 👁️; nấm 🍄; rắn 🐍; tất 🧦;
+      cân ⚖️; pin 🔋; kem 🍦; kim 🪡; bút ✏️; dép 🩴; đèn 💡 den; nến 🕯️ den; tôm 🦐; cam 🍊; vịt 🦆`) },
+    { name: "Cấp 2", desc: "Phụ âm ghép (ch, gh, gi, kh, ng, ngh, nh, ph, qu, th, tr) + nguyên âm đơn (chó, nho, thỏ…)", digraph: true, items: list(`
+      chó 🐶; chim 🐦; chân 🦶; chanh 🍋; nho 🍇; nhà 🏠; nhím 🦔; nhện 🕷️; nhẫn 💍; nhạc 🎵; khỉ 🐵; khăn 🧣;
+      phở 🍜; phim 🎬; ghế 🪑; ghim 📌; ghẹ 🦀; ngô 🌽; ngủ 😴; nghé 🐃; thỏ 🐰; thư ✉️; thịt 🍖; thông 🌲; tre 🎋;
+      trà 🍵; trăng 🌙; trống 🥁; trứng 🥚; giỏ 🧺 gio; gió 🌬️ gio; quà 🎁; quần 👖`) },
+    { name: "Cấp 3", desc: "Phụ âm đơn + nguyên âm đôi, nguyên âm ba (cua, mưa, bướm, diều…)", cluster: true, items: list(`
       cua 🦀; rùa 🐢; lúa 🌾; đũa 🥢; dứa 🍍; dưa 🍉; sữa 🥛; mưa 🌧️ may; mây ☁️ may; cửa 🚪; lửa 🔥; tai 👂;
-      hai 2; sáu 6; bảy 7; cáo 🦊; sao ⭐; dao 🔪; áo 👕; mèo 🐱; kéo ✂️; kẹo 🍬; heo 🐷; voi 🐘; tỏi 🧄;
-      muối 🧂; muỗi 🦟; túi 👜; núi ⛰️; mũi 👃; sâu 🐛; rau 🥬; dâu 🍓; râu 🧔; tàu 🚂; tay ✋; váy 👗;
-      cây 🌳; rìu 🪓; lều ⛺; cừu 🐑; hươu 🦌; hoa 🌸; loa 📢; xoài 🥭`) },
-    { name: "Cấp 3", desc: "Phụ âm ghép: th, ng, nh, ch, kh, ph, gh, tr, gi, qu (thỏ, nho, ngô…)", items: list(`
-      thỏ 🐰; thư ✉️; thuyền ⛵; thịt 🍖; thìa 🥄; ngựa 🐴; ngô 🌽; ngủ 😴 ngu; giường 🛏️ ngu; nho 🍇; nhà 🏠;
-      nhện 🕷️; nhẫn 💍; nhím 🦔; chó 🐶; chim 🐦; chuối 🍌; chổi 🧹; chuột 🐭; chanh 🍋; chân 🦶; chảo 🍳 trung;
-      trứng 🥚 trung; khỉ 🐵; khoai 🍠; khăn 🧣; khoá 🔒; phở 🍜; ghế 🪑; trâu 🐃; trống 🥁; trăng 🌙; tre 🎋;
-      trà 🍵; giày 👟; quà 🎁; quần 👖`), digraph: /^(ngh|ng|nh|ch|kh|ph|gh|th|tr|gi|qu)/ }
+      hai 2; sáu 6; bảy 7; cáo 🦊; sao ⭐; dao 🔪; mèo 🐱; kéo ✂️; kẹo 🍬; heo 🐷; voi 🐘; tỏi 🧄; muối 🧂;
+      muỗi 🦟; túi 👜; núi ⛰️; mũi 👃; sâu 🐛; rau 🥬; dâu 🍓; râu 🧔; tàu 🚂; tay ✋; váy 👗; cây 🌳; rìu 🪓;
+      lều ⛺; cừu 🐑; hươu 🦌; hoa 🌸; loa 📢; xoài 🥭; gấu 🐻; bướm 🦋; kiến 🐜; nước 💧; lưỡi 👅; cười 😄;
+      tuyết ❄️; diều 🪁; xương 🦴; gương 🪞; tiền 💵; muỗng 🥄; biển 🌊; miệng 👄`) },
+    { name: "Cấp 4", desc: "Phụ âm ghép + nguyên âm đôi, nguyên âm ba (thuyền, chuối, giường…)", digraph: true, cluster: true, items: list(`
+      thuyền ⛵; thìa 🥄; ngựa 🐴; giường 🛏️; chuối 🍌; chổi 🧹; chuột 🐭; chuông 🔔; khoai 🍠; khoá 🔒; trâu 🐃;
+      giày 👟; giấy 📄; trường 🏫; chai 🍾; thuốc 💊; phao 🛟; chảo 🍳; nghêu 🦪; thiệp 💌; chạy 🏃; người 🧍; khói 💨`) }
   ];
   App.WORD_LEVELS = LEVELS; // dùng chung với trò "Chọn hình đúng"
+  // Tô màu từ theo cấp: <b>phụ âm ghép</b>, <em>nguyên âm đôi/ba</em>
+  App.wordHtml = (L, w) => {
+    const ch = Array.from(w), m = L.digraph && w.match(DIGRAPH);
+    const k = m ? Array.from(m[0]).length : 0, head = m ? `<b>${m[0]}</b>` : "";
+    if (!L.cluster) return head + ch.slice(k).join("");
+    let i = k; while (i < ch.length && !isV(ch[i])) i++;
+    let j = i; while (j < ch.length && isV(ch[j])) j++;
+    return head + ch.slice(k, i).join("") + `<em>${ch.slice(i, j).join("")}</em>` + ch.slice(j).join("");
+  };
 
   // 10 trang, mỗi trang 6 từ khác nhau; ưu tiên từ ít xuất hiện để cả lượt đa dạng nhất có thể.
   function makePages(pool) {
@@ -46,7 +63,7 @@
 
   register({
     id: "noi-tu-hinh", subject: "tieng-viet", name: "Nối từ với hình", emoji: "🔗",
-    desc: "Đọc từ rồi kéo nối với hình – 3 cấp độ, mỗi lượt 10 trang", ages: [2],
+    desc: "Đọc từ rồi kéo nối với hình – 4 cấp độ, mỗi lượt 10 trang", ages: [2],
     mount(el) {
       let lvl = loadLevel(), pages, p, score, words, mistakes, lines, sel, drag, busy, ro;
 
@@ -61,10 +78,7 @@
         </div>`;
       const play = el.querySelector(".ntw-play"), actions = el.querySelector(".ntw-actions");
 
-      const wordHtml = (w) => {
-        const m = LEVELS[lvl].digraph && w.match(LEVELS[lvl].digraph);
-        return m ? `<b>${m[0]}</b>${w.slice(m[0].length)}` : w;
-      };
+      const wordHtml = (w) => App.wordHtml(LEVELS[lvl], w);
       const picHtml = (pic) => /^\d+$/.test(pic) ? `<span class="ntw-num">${pic}</span>` : `<span class="mg-em">${pic}</span>`;
 
       function renew() { pages = makePages(LEVELS[lvl].items); replay(); }
