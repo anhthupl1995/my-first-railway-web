@@ -1,9 +1,9 @@
 // Tiếng Việt – Nối từ với hình (4–5 tuổi)
-// Mỗi lượt 10 trang, mỗi trang 6 từ / 6 hình. Bé kéo (tay hoặc chuột) từ một ô sang ô bên kia để nối,
-// hoặc chạm một ô rồi chạm ô bên kia. "Chơi lại" = chơi lại đúng 10 trang đó; "Làm mới" = tạo 10 trang mới.
+// Mỗi lượt 6 trang, mỗi trang 6 từ / 6 hình. Bé kéo (tay hoặc chuột) từ một ô sang ô bên kia để nối,
+// hoặc chạm một ô rồi chạm ô bên kia. "Chơi lại" = chơi lại đúng 6 trang đó; "Chơi tiếp" = tạo 6 trang mới.
 (function () {
   const { register, shuffle, pick } = App;
-  const PAGES = 10, PER = 6, KEY = "ntw-level";
+  const PAGES = App.ROUNDS, PER = 6, KEY = "ntw-level";
 
   // "từ hình [nhóm]" – các từ cùng nhóm trông/nghe dễ lẫn nên không bao giờ nằm chung một trang.
   const list = (s) => s.split(";").map((x) => { const [w, pic, g] = x.trim().split(/\s+/); return { w, pic, g }; });
@@ -42,7 +42,7 @@
     return head + ch.slice(k, i).join("") + `<em>${ch.slice(i, j).join("")}</em>` + ch.slice(j).join("");
   };
 
-  // 10 trang, mỗi trang 6 từ khác nhau; ưu tiên từ ít xuất hiện để cả lượt đa dạng nhất có thể.
+  // 6 trang, mỗi trang 6 từ khác nhau; ưu tiên từ ít xuất hiện để cả lượt đa dạng nhất có thể.
   function makePages(pool) {
     const used = new Map();
     return Array.from({ length: PAGES }, () => {
@@ -63,7 +63,7 @@
 
   register({
     id: "noi-tu-hinh", subject: "tieng-viet", name: "Nối từ với hình", emoji: "🔗",
-    desc: "Đọc từ rồi kéo nối với hình – 4 cấp độ, mỗi lượt 10 trang", ages: [2],
+    desc: "Đọc từ rồi kéo nối với hình – 4 cấp độ, mỗi lượt 6 trang", ages: [2],
     mount(el) {
       let lvl = loadLevel(), pages, p, score, words, mistakes, lines, sel, drag, busy, ro;
 
@@ -74,7 +74,7 @@
         <div class="ntw-play"></div>
         <div class="actions ntw-actions">
           <button type="button" class="btn btn-soft" data-replay>🔁 Chơi lại</button>
-          <button type="button" class="btn btn-main" data-renew>✨ Làm mới</button>
+          <button type="button" class="btn btn-main" data-renew>▶️ Chơi tiếp</button>
         </div>`;
       const play = el.querySelector(".ntw-play"), actions = el.querySelector(".ntw-actions");
 
@@ -94,8 +94,8 @@
           actions.hidden = true;
           return App.finish(play, {
             score, total: PAGES * PER, text: `Bé nối đúng ngay lần đầu <b>${score}/${PAGES * PER}</b> cặp.`,
-            againLabel: "🔁 Chơi lại", again: () => { actions.hidden = false; replay(); },
-            renewLabel: "✨ Làm mới", renew: () => { actions.hidden = false; renew(); }
+            again: () => { actions.hidden = false; replay(); },
+            renew: () => { actions.hidden = false; renew(); }
           });
         }
         actions.hidden = false;

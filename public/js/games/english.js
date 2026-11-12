@@ -16,7 +16,7 @@
     mount(el, ctx) {
       const listen = ctx.age <= 1, n = [2, 3, 3, 4][ctx.age];
       quiz(el, {
-        rounds: [6, 8, 10, 10][ctx.age], autoSay: listen,
+        autoSay: listen,
         make() {
           const items = sample(ALL, n), t = pick(items);
           if (listen) return {
@@ -77,8 +77,10 @@
       let theme = "animals";
       const hint = { 1: "Từ nằm theo hàng ngang →", 2: "Từ nằm ngang → hoặc dọc ↓", 3: "Từ nằm ngang →, dọc ↓ hoặc chéo ↘" }[ctx.age];
 
-      function start() {
-        const { g, placed } = buildPuzzle(cfg, theme), size = cfg.size, letters = g.flat();
+      // start(puzzle) chơi lại đúng bảng cũ; start() tạo bảng mới
+      function start(puzzle) {
+        const pz = puzzle && puzzle.g ? puzzle : buildPuzzle(cfg, theme);
+        const g = pz.g, placed = pz.placed.map((p) => ({ ...p, found: false })), size = cfg.size, letters = g.flat();
         let startCell = null, current = null, dragging = false, pending = null, foundCount = 0;
         el.innerHTML = `
           <div class="chips" role="group" aria-label="Chủ đề">${Object.entries(EN).map(([id, t]) =>
@@ -112,7 +114,7 @@
           fb.className = "q-feedback ok"; fb.textContent = `${App.pick(App.PRAISE)} ${hit.w}`;
           App.sfx(true); setTimeout(() => App.speak(hit.w.toLowerCase(), "en-US"), 250);
           if (foundCount === placed.length) setTimeout(() => App.finish(el, {
-            score: 1, total: 1, text: `Bé đã tìm được hết <b>${placed.length}</b> từ!`, againLabel: "Bảng mới", again: start
+            score: 1, total: 1, text: `Bé đã tìm được hết <b>${placed.length}</b> từ!`, again: () => start(pz), renew: () => start()
           }), 1300);
         }
 
@@ -134,7 +136,7 @@
         };
         grid.addEventListener("pointerup", up);
         grid.addEventListener("pointercancel", () => { dragging = false; highlight([]); });
-        el.querySelector("[data-new]").addEventListener("click", start);
+        el.querySelector("[data-new]").addEventListener("click", () => start());
         el.querySelector(".chips").addEventListener("click", (e) => { const b = e.target.closest("[data-theme]"); if (b) { theme = b.dataset.theme; start(); } });
       }
       start();
@@ -224,7 +226,7 @@
             App.sfx(true);
             if (done === shapes.length) setTimeout(() => {
               const right = mistakes.filter((m) => m === 0).length;
-              App.finish(el, { score: right, total: shapes.length, text: `Bé tô đúng ngay lần đầu <b>${right}/${shapes.length}</b> ô.`, againLabel: "Tô tranh khác", again: () => {
+              App.finish(el, { score: right, total: shapes.length, text: `Bé tô đúng ngay lần đầu <b>${right}/${shapes.length}</b> ô.`, again: start, renew: () => {
                 picId = PICTURES[(PICTURES.findIndex((p) => p.id === picId) + 1) % PICTURES.length].id; start();
               } });
             }, 900);

@@ -13,7 +13,6 @@
     mount(el, ctx) {
       const pool = ctx.age === 0 ? EASY : LETTERS, n = [3, 4, 6][ctx.age], lower = ctx.age === 2;
       quiz(el, {
-        rounds: [6, 8, 10][ctx.age],
         make() {
           const t = pick(pool);
           // Bé nhỏ: tránh các chữ quá giống nhau (A/Ă/Â)
@@ -45,7 +44,7 @@
       const k = ctx.age === 0 ? 2 : 3, all = App.DATA[key];
       let deck = [];
       quiz(el, {
-        rounds: ctx.age === 0 ? 6 : 8, autoSay: true,
+        autoSay: true,
         make() {
           if (!deck.length) deck = shuffle(all); // không lặp con vật cho tới khi hết lượt
           const p = deck.pop(), question = ask(p.l.name);
@@ -84,7 +83,6 @@
     mount(el, ctx) {
       const nOpt = ctx.age === 2 ? 3 : 4;
       quiz(el, {
-        rounds: 10,
         make() {
           const [w, em] = pick(WORDS), chars = Array.from(w.normalize("NFC"));
           const k = ctx.age === 2 ? 0 : Math.floor(Math.random() * chars.length), ans = chars[k];

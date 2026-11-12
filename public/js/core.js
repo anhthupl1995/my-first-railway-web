@@ -16,6 +16,9 @@
     { id: "tieng-anh", name: "Tiếng Anh", emoji: "🌍", c: "#27AE60", t: "#E6F6EC", d: "#1A7A43", desc: "Từ vựng, tìm chữ, tô màu" }
   ];
 
+  // Số câu mỗi lượt chơi – áp dụng cho MỌI bài (kể cả bài thêm sau này).
+  App.ROUNDS = 6;
+
   // Each topic: { id, subject, name, emoji, desc, ages: [age indexes], mount(el, ctx) }
   App.topics = [];
   App.register = (t) => App.topics.push(t);
@@ -77,6 +80,7 @@
   App.PRAISE = ["Giỏi quá! 🎉", "Đúng rồi! 👏", "Tuyệt vời! ⭐", "Bé thông minh quá! 🌟", "Chính xác! 💯"];
 
   // ---------- Finish screen ----------
+  // Mọi bài đều kết thúc bằng 2 nút: o.again = "Chơi lại" đúng bộ câu vừa xong, o.renew = "Chơi tiếp" với bộ câu mới.
   App.finish = (el, o) => {
     const r = o.score / o.total, stars = r >= 0.9 ? 3 : r >= 0.6 ? 2 : 1;
     const sid = (location.hash.match(/^#\/mon\/([^/]+)/) || [])[1] || "";
@@ -87,21 +91,21 @@
         <div class="stars" aria-label="${stars} trên 3 sao">${"⭐".repeat(stars)}<span class="dim">${"⭐".repeat(3 - stars)}</span></div>
         <p>${o.text || `Bé làm đúng ngay lần đầu <b>${o.score}/${o.total}</b> câu.`}</p>
         <div class="actions">
-          <button type="button" class="btn btn-main" data-again>${o.againLabel || "Chơi lại"}</button>
-          ${o.renew ? `<button type="button" class="btn btn-main" data-renew>${o.renewLabel || "Làm mới"}</button>` : ""}
+          <button type="button" class="btn btn-soft" data-again>🔁 Chơi lại</button>
+          <button type="button" class="btn btn-main" data-renew>▶️ Chơi tiếp</button>
           <a class="btn btn-soft" href="#/mon/${sid}">Chọn bài khác</a>
         </div>
       </div>`;
     el.querySelector("[data-again]").addEventListener("click", o.again);
-    if (o.renew) el.querySelector("[data-renew]").addEventListener("click", o.renew);
+    el.querySelector("[data-renew]").addEventListener("click", o.renew);
     App.sfx(true);
   };
 
   // ---------- Matching engine (nối trên màn hình) ----------
   // opts: { boards, prompt, make() -> [{ l: {em, name}, r: {em, name} }] }
   // Bé chạm một hình bên trái và một hình bên phải; đúng thì hiện đường nối.
-  App.matchGame = (el, opts) => {
-    const total = opts.boards || 3;
+  App.matchGame = (el, opts, saved) => {
+    const total = opts.boards || 3, boards = saved || [];
     let b = 0, score = 0, count = 0, pairs, sel, mistakes, lines;
     const box = document.createElement("div");
     el.innerHTML = ""; el.appendChild(box);
@@ -111,9 +115,11 @@
       `<span class="mg-em" aria-hidden="true">${x.em}</span><span class="mg-name">${x.name}</span></button>`;
 
     function next() {
-      if (b >= total) return App.finish(el, { score, total: count, text: `Bé nối đúng ngay lần đầu <b>${score}/${count}</b> cặp.`, again: () => App.matchGame(el, opts) });
-      pairs = opts.make(); sel = { l: null, r: null }; mistakes = pairs.map(() => 0); lines = [];
-      const order = App.derange(pairs.length);
+      if (b >= total) return App.finish(el, { score, total: count, text: `Bé nối đúng ngay lần đầu <b>${score}/${count}</b> cặp.`,
+        again: () => App.matchGame(el, opts, boards), renew: () => App.matchGame(el, opts) });
+      if (!boards[b]) { const ps = opts.make(); boards[b] = { pairs: ps, order: App.derange(ps.length) }; }
+      pairs = boards[b].pairs; sel = { l: null, r: null }; mistakes = pairs.map(() => 0); lines = [];
+      const order = boards[b].order;
       const right = Array(pairs.length); order.forEach((row, i) => (right[row] = i));
       box.innerHTML = `
         <div class="quiz">
@@ -169,16 +175,16 @@
   };
 
   // ---------- Quiz engine ----------
-  // opts.make(i) returns { prompt, options: [{ html, ok }], say?: [text, lang], after?: [text, lang], optClass? }
-  App.quiz = (el, opts) => {
-    const total = opts.rounds || 10;
+  // Luôn App.ROUNDS câu mỗi lượt. opts.make(i) returns { prompt, options: [{ html, ok }], say?: [text, lang], after?: [text, lang], optClass? }
+  App.quiz = (el, opts, saved) => {
+    const total = App.ROUNDS, rounds = saved || [];
     let i = 0, score = 0, round, firstTry, locked;
     const box = document.createElement("div");
     el.innerHTML = ""; el.appendChild(box);
 
     function next() {
-      if (i >= total) return App.finish(el, { score, total, again: () => App.quiz(el, opts) });
-      round = opts.make(i); firstTry = true; locked = false;
+      if (i >= total) return App.finish(el, { score, total, again: () => App.quiz(el, opts, rounds), renew: () => App.quiz(el, opts) });
+      round = rounds[i] || (rounds[i] = opts.make(i)); firstTry = true; locked = false;
       box.innerHTML = `
         <div class="quiz">
           <div class="progress"><span style="width:${(i / total) * 100}%"></span></div>

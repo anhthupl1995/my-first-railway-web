@@ -325,3 +325,18 @@ a.chip { text-decoration: none; }
 @keyframes pop { 50% { transform: scale(1.08); } }
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Bé tập đọc (nhận giọng nói) */
+.doc-pic { margin: -6px 0 12px; animation: pop .35s; }
+.doc-pic[hidden], .doc-help[hidden], .doc-help [hidden] { display: none; }
+.doc-controls, .doc-help { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+.mic { width: 96px; height: 96px; border-radius: 50%; border: none; cursor: pointer; font-size: 44px; background: linear-gradient(135deg, #FFB547, #FF7A59); box-shadow: 0 6px 0 #D9622F; transition: transform .1s; }
+.mic:active { transform: translateY(3px); box-shadow: 0 3px 0 #D9622F; }
+.mic.on { background: linear-gradient(135deg, #34D399, #27AE60); box-shadow: 0 6px 0 #1A7A43; animation: mic-pulse 1.2s ease-in-out infinite; }
+@keyframes mic-pulse { 0%, 100% { outline: 0 solid rgba(39, 174, 96, .35); } 50% { outline: 14px solid rgba(39, 174, 96, .15); } }
+@media (prefers-reduced-motion: reduce) { .mic.on { animation: none; } }
+
+/* To nhất, nhỏ nhất: mọi ô cao bằng nhau, hình đặt sát đáy để dễ so độ to */
+.size-opts .opt { min-height: 170px; grid-template-rows: 1fr auto; align-items: end; }
+.size-em { line-height: 1; display: block; }
+@media (max-width: 380px) { .size-em { transform: scale(.85); transform-origin: bottom; } }

@@ -1,9 +1,9 @@
 // Tiếng Việt – Chọn hình đúng (4–6 tuổi)
-// Mỗi câu hiện một từ (vd: "ba"), bé chọn 1 trong 3 hình đúng với từ đó. Mỗi lượt 10 câu, 4 cấp độ
+// Mỗi câu hiện một từ (vd: "ba"), bé chọn 1 trong 3 hình đúng với từ đó. Mỗi lượt 6 câu, 4 cấp độ
 // dùng chung bộ từ với trò "Nối từ với hình" (App.WORD_LEVELS).
 (function () {
   const { register, shuffle } = App;
-  const ROUNDS = 10, NOPT = 3, KEY = "cht-level";
+  const NOPT = 3, KEY = "cht-level";
   const LEVELS = App.WORD_LEVELS;
 
   const loadLevel = () => { try { const v = +localStorage.getItem(KEY); return LEVELS[v] ? v : 0; } catch (e) { return 0; } };
@@ -12,7 +12,7 @@
 
   register({
     id: "chon-hinh", subject: "tieng-viet", name: "Chọn hình đúng", emoji: "🖼️",
-    desc: "Đọc từ rồi chọn hình đúng – 4 cấp độ, mỗi lượt 10 câu", ages: [2, 3],
+    desc: "Đọc từ rồi chọn hình đúng – 4 cấp độ, mỗi lượt 6 câu", ages: [2, 3],
     mount(el) {
       let lvl = loadLevel(), deck = [];
       el.innerHTML = `
@@ -38,9 +38,8 @@
       function start() {
         el.querySelector(".ntw-desc").textContent = LEVELS[lvl].desc;
         App.quiz(play, {
-          rounds: ROUNDS,
           make(i) {
-            if (i === 0) deck = shuffle(LEVELS[lvl].items); // 10 từ khác nhau mỗi lượt; "Chơi lại" ra bộ mới
+            if (i === 0) deck = shuffle(LEVELS[lvl].items); // 6 từ khác nhau mỗi lượt; "Chơi lại" ra bộ mới
             const x = deck[i % deck.length];
             return {
               prompt: `<p class="q-text">Bé đọc từ rồi chọn hình đúng nhé!</p><div class="cht-word">${wordHtml(x.w)}</div>`,
