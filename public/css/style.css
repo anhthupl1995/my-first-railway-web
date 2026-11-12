@@ -245,6 +245,13 @@ main { max-width: 1040px; margin: 0 auto; padding: 18px 16px 24px; }
 .mg-lines line.tmp { stroke: #2F80ED; stroke-dasharray: 1 12; stroke-width: 6; }
 .ntw-actions[hidden] { display: none; }
 
+/* Chọn hình đúng (đọc từ, chọn 1 trong 3 hình) */
+.cht-word { font-size: clamp(56px, 15vw, 88px); font-weight: 800; line-height: 1.1; color: var(--ink); background: #fff; border: 3px dashed #FFB547; border-radius: 24px; padding: 6px 28px; }
+.cht-word b { color: var(--brand-dark); }
+.cht-opts .opt { min-height: 120px; }
+.cht-opts .emoji-opt { font-size: clamp(52px, 14vw, 72px); }
+.cht-num { font-size: clamp(52px, 14vw, 72px); font-weight: 800; line-height: 1; color: #2F80ED; }
+
 /* ---------- Worksheet library ---------- */
 .chips-left { justify-content: flex-start; }
 a.chip { text-decoration: none; }

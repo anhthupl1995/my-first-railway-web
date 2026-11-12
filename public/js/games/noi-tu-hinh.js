@@ -23,6 +23,7 @@
       trứng 🥚 trung; khỉ 🐵; khoai 🍠; khăn 🧣; khoá 🔒; phở 🍜; ghế 🪑; trâu 🐃; trống 🥁; trăng 🌙; tre 🎋;
       trà 🍵; giày 👟; quà 🎁; quần 👖`), digraph: /^(ngh|ng|nh|ch|kh|ph|gh|th|tr|gi|qu)/ }
   ];
+  App.WORD_LEVELS = LEVELS; // dùng chung với trò "Chọn hình đúng"
 
   // 10 trang, mỗi trang 6 từ khác nhau; ưu tiên từ ít xuất hiện để cả lượt đa dạng nhất có thể.
   function makePages(pool) {
