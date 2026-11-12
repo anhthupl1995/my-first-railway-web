@@ -74,7 +74,7 @@
   // ---------- Cộng trừ (phiếu bài tập) ----------
   register({
     id: "cong-tru", subject: "toan", name: "Cộng trừ", emoji: "➕",
-    desc: "Điền kết quả vào ô trống như phiếu bài tập", ages: [2, 3],
+    desc: "Điền kết quả vào ô trống như phiếu bài tập", ages: [3],
     mount(el, ctx) {
       const MAX = [5, 5, 10, 20][ctx.age], COUNT = App.ROUNDS, wide = MAX > 9;
       let mode = "mix", problems = [];
@@ -150,6 +150,43 @@
       newSheet();
     }
   });
+
+  // ---------- Cộng / trừ trong phạm vi 5, 10 (4–5 tuổi) ----------
+  // Mỗi câu một phép tính, chọn 1 trong 3 đáp án. 6 câu trong lượt không trùng nhau.
+  // Phạm vi 10 chỉ lấy phép tính có số lớn hơn 5 (phần dễ hơn đã có ở bài phạm vi 5).
+  function opPairs(op, max) {
+    const out = [];
+    for (let a = 1; a <= max; a++) for (let b = 1; b <= max; b++) {
+      if (op === "+" ? a + b > max : b > a) continue;
+      if (max > 5 && (op === "+" ? a + b : a) <= 5) continue;
+      out.push([a, b]);
+    }
+    return out;
+  }
+  const opTopic = (id, name, emoji, op, max) => register({
+    id, subject: "toan", name, emoji, ages: [2],
+    desc: `Tính ${op === "+" ? "cộng" : "trừ"} trong phạm vi ${max}, chọn đáp án đúng`,
+    mount(el) {
+      const pairs = opPairs(op, max), word = op === "+" ? "cộng" : "trừ";
+      let deck = [];
+      quiz(el, {
+        autoSay: true,
+        make(i) {
+          if (i === 0) deck = App.shuffle(pairs);
+          const [a, b] = deck[i % deck.length], ans = op === "+" ? a + b : a - b;
+          return {
+            prompt: `<div class="calc" aria-label="${a} ${word} ${b} bằng mấy">${a} ${op === "+" ? "+" : "−"} ${b} = <span class="calc-q">?</span></div>`,
+            say: [`${a} ${word} ${b} bằng mấy?`, "vi-VN"], after: [`${a} ${word} ${b} bằng ${ans}`, "vi-VN"],
+            options: App.numOptions(ans, 0, max, 3).map((v) => ({ html: v, ok: v === ans }))
+          };
+        }
+      });
+    }
+  });
+  opTopic("cong-5", "Cộng trong phạm vi 5", "➕", "+", 5);
+  opTopic("cong-10", "Cộng trong phạm vi 10", "➕", "+", 10);
+  opTopic("tru-5", "Trừ trong phạm vi 5", "➖", "-", 5);
+  opTopic("tru-10", "Trừ trong phạm vi 10", "➖", "-", 10);
 
   // ---------- So sánh ----------
   register({
