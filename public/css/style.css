@@ -393,3 +393,33 @@ a.chip { text-decoration: none; }
   .cel-run { left: 50%; transform: translateX(-50%); }
   .cel-bubble { opacity: 1; }
 }
+
+/* ---------- Chạm chữ, xem hình ---------- */
+.cc-board { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 12px; align-items: start; text-align: left; }
+.cc-words { display: grid; grid-template-columns: 1fr; gap: 8px; }
+@media (min-width: 640px) { .cc-words { grid-template-columns: 1fr 1fr; } }
+.cc-word { min-height: 52px; padding: 6px 10px; border: 3px solid var(--line); background: #fff; border-radius: 16px; font: inherit; font-weight: 800; font-size: clamp(18px, 4.6vw, 24px); color: var(--ink); cursor: pointer; box-shadow: 0 3px 0 var(--line); text-align: center; }
+.cc-word:hover { border-color: #FFB547; }
+.cc-word.seen { background: #FFF6E5; }
+.cc-word.seen::after { content: " ✓"; color: var(--ok); }
+.cc-word[aria-pressed="true"] { border-color: #F2994A; background: #FFE8D2; transform: translateY(-2px); }
+.cc-stage { position: sticky; top: 84px; min-height: 300px; border-radius: 22px; background: linear-gradient(#E8F6FF, #FFF8EE); border: 3px dashed #FFB547; display: grid; justify-items: center; align-content: center; gap: 6px; padding: 14px 10px; overflow: hidden; text-align: center; }
+.cc-hint { display: grid; justify-items: center; gap: 6px; color: var(--muted); font-weight: 700; font-size: 18px; }
+.cc-hint span { font-size: 56px; animation: cc-point 1s ease-in-out infinite alternate; }
+.cc-pic { width: 100%; height: 150px; display: grid; place-items: center; }
+.cc-pic span { font-size: clamp(84px, 22vw, 120px); line-height: 1; display: inline-block; }
+.cc-name { font-size: clamp(28px, 7vw, 40px); font-weight: 800; color: var(--brand-dark); line-height: 1.1; }
+.cc-say { margin: 0; font-weight: 700; font-size: clamp(15px, 3.8vw, 19px); }
+/* Kiểu cử động */
+.cc-run span { animation: cc-run 2.4s ease-in-out infinite; }
+.cc-fly span { animation: cc-fly 3s ease-in-out infinite; }
+.cc-swim span { animation: cc-swim 1.6s ease-in-out infinite; }
+.cc-hop span { animation: cc-hop .6s cubic-bezier(.3, 0, .4, 1) infinite alternate; }
+.cc-pic span { animation-delay: 0s; }
+.cc-pic { animation: pop .4s; }
+@keyframes cc-run { 0% { transform: translateX(60%); } 50% { transform: translateX(-40%) translateY(-6px); } 100% { transform: translateX(60%); } }
+@keyframes cc-fly { 0%, 100% { transform: translate(-25%, 10px) rotate(-8deg); } 25% { transform: translate(0, -18px) rotate(6deg); } 50% { transform: translate(25%, 6px) rotate(-4deg); } 75% { transform: translate(0, -10px) rotate(8deg); } }
+@keyframes cc-swim { 0%, 100% { transform: translateX(-12%) rotate(-6deg); } 50% { transform: translateX(12%) rotate(6deg); } }
+@keyframes cc-hop { from { transform: translateY(0) scaleY(.94); } to { transform: translateY(-30px) scaleY(1.04); } }
+@keyframes cc-point { from { transform: translateX(0); } to { transform: translateX(-12px); } }
+@media (prefers-reduced-motion: reduce) { .cc-pic span, .cc-hint span { animation: none !important; } }
