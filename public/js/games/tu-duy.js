@@ -31,12 +31,21 @@
     id: "me-cung", subject: "tu-duy", name: "Mê cung", emoji: "🌀",
     desc: "Đưa con vật đi qua mê cung tới đích", ages: [0, 1, 2, 3],
     mount(el, ctx) {
-      const n = MAZE_SIZE[ctx.age], total = App.ROUNDS, goal = n * n - 1;
-      let set, k, score, walls, theme, trail, bumps, busy;
+      const n = MAZE_SIZE[ctx.age], total = App.ROUNDS;
+      // Xuất phát ở một góc, đích ở góc đối diện – đổi ngẫu nhiên để mỗi mê cung trông khác nhau
+      const CORNERS = [[0, n * n - 1], [n - 1, n * (n - 1)], [n * n - 1, 0], [n * (n - 1), n - 1]];
+      let set = [], k, score, walls, theme, start, goal, trail, bumps, busy;
 
       function renew() {
-        const themes = shuffle(MAZE_THEMES);
-        set = Array.from({ length: total }, (_, i) => ({ walls: makeMaze(n), theme: themes[i % themes.length] }));
+        // Lượt mới: con vật đầu tiên và góc xuất phát của mê cung đầu không trùng lượt trước
+        const prev = set[0];
+        let themes; do { themes = shuffle(MAZE_THEMES); } while (prev && themes[0] === prev.theme);
+        let corners = shuffle(CORNERS);
+        if (prev && corners[0][0] === prev.start) corners.push(corners.shift());
+        set = Array.from({ length: total }, (_, i) => {
+          const [s0, g0] = corners[i % corners.length];
+          return { walls: makeMaze(n), theme: themes[i % themes.length], start: s0, goal: g0 };
+        });
         replay();
       }
       function replay() { k = 0; score = 0; show(); }
@@ -45,7 +54,7 @@
         if (k >= total) return App.finish(el, {
           score, total, text: `Bé đi hết <b>${total}</b> mê cung, <b>${score}</b> lần không chạm tường.`, again: replay, renew
         });
-        ({ walls, theme } = set[k]); trail = [0]; bumps = 0; busy = false;
+        ({ walls, theme, start, goal } = set[k]); trail = [start]; bumps = 0; busy = false;
         const prompt = `Bé giúp ${theme[2]} tìm đường tới ${theme[3]} nhé!`;
         el.innerHTML = `
           <div class="quiz">
