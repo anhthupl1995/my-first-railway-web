@@ -177,25 +177,63 @@
       ["polygon", { points: "108,190 192,190 180,236 120,236" }, "brown", [150, 214]],
       petal(0, "red"), petal(60, "pink"), petal(120, "purple"), petal(180, "red"), petal(240, "pink"), petal(300, "purple"),
       ["circle", { cx: 150, cy: 85, r: 17 }, "yellow", [150, 85, 9]]
+    ] },
+    { id: "car", name: "Ô tô", emoji: "🚗", shapes: [
+      ["rect", { x: 0, y: 0, width: 300, height: 180 }, "blue", [40, 26]],
+      ["rect", { x: 0, y: 180, width: 300, height: 60 }, "brown", [150, 222]],
+      ["circle", { cx: 250, cy: 45, r: 25 }, "yellow", [250, 45]],
+      ["polygon", { points: "90,110 118,68 192,68 220,110" }, "orange", [155, 94]],
+      ["rect", { x: 50, y: 110, width: 200, height: 52, rx: 10 }, "red", [150, 140]],
+      ["circle", { cx: 95, cy: 165, r: 20 }, "black", [95, 165, 9]],
+      ["circle", { cx: 205, cy: 165, r: 20 }, "black", [205, 165, 9]]
+    ] },
+    { id: "tree", name: "Cây táo", emoji: "🌳", shapes: [
+      ["rect", { x: 0, y: 0, width: 300, height: 190 }, "blue", [40, 26]],
+      ["rect", { x: 0, y: 190, width: 300, height: 50 }, "green", [60, 220]],
+      ["circle", { cx: 262, cy: 40, r: 24 }, "yellow", [262, 40, 11]],
+      ["rect", { x: 135, y: 130, width: 30, height: 65 }, "brown", [150, 172, 9]],
+      ["circle", { cx: 150, cy: 92, r: 66 }, "green", [150, 62]],
+      ["circle", { cx: 115, cy: 102, r: 14 }, "red", [115, 102, 8]],
+      ["circle", { cx: 180, cy: 88, r: 14 }, "red", [180, 88, 8]],
+      ["circle", { cx: 155, cy: 125, r: 14 }, "red", [155, 125, 8]]
+    ] },
+    { id: "boat", name: "Thuyền buồm", emoji: "⛵", shapes: [
+      ["rect", { x: 0, y: 0, width: 300, height: 170 }, "orange", [40, 26]],
+      ["circle", { cx: 60, cy: 55, r: 24 }, "yellow", [60, 55, 11]],
+      ["rect", { x: 0, y: 170, width: 300, height: 70 }, "blue", [40, 222]],
+      ["polygon", { points: "70,150 230,150 205,192 95,192" }, "brown", [150, 172]],
+      ["polygon", { points: "157,40 157,145 228,145" }, "red", [180, 122]],
+      ["polygon", { points: "145,58 145,145 88,145" }, "purple", [126, 125, 11]],
+      ["polygon", { points: "157,40 188,50 157,60" }, "pink", [167, 51, 7]]
     ] }
   ];
+  const PICS_PER_ROUND = 3;
   const attrs = (o) => Object.entries(o).map(([k, v]) => `${k}="${v}"`).join(" ");
 
   register({
     id: "to-mau", subject: "tieng-anh", name: "Tô màu theo chữ", emoji: "🎨",
-    desc: "Đọc tên màu tiếng Anh và tô đúng màu vào tranh", ages: [1, 2, 3],
+    desc: "Đọc tên màu tiếng Anh và tô đúng màu – mỗi lượt 3 tranh", ages: [1, 2, 3],
     mount(el, ctx) {
-      let picId = PICTURES[0].id;
-      function start() {
-        const pic = PICTURES.find((p) => p.id === picId), shapes = pic.shapes;
+      // Mỗi lượt 3 tranh tô liên tiếp. "Chơi lại" = đúng 3 tranh đó; "Chơi tiếp" = 3 tranh khác (ưu tiên tranh chưa tô).
+      let set = [], p, right, total;
+      function renew() {
+        const fresh = shuffle(PICTURES.filter((x) => !set.includes(x)));
+        set = fresh.concat(shuffle(PICTURES.filter((x) => !fresh.includes(x)))).slice(0, PICS_PER_ROUND);
+        replay();
+      }
+      function replay() { p = 0; right = 0; total = 0; draw(); }
+
+      function draw() {
+        if (p >= set.length) return App.finish(el, { score: right, total, text: `Bé tô đúng ngay lần đầu <b>${right}/${total}</b> ô.`, again: replay, renew });
+        const pic = set[p], shapes = pic.shapes;
         const used = [...new Set(shapes.map((s) => s[2]))];
         const palette = ctx.age === 1 ? used : Object.keys(COLORS); // bé nhỏ: chỉ các màu có trong tranh
         let color = null, done = 0;
         const mistakes = shapes.map(() => 0), filled = shapes.map(() => false);
         el.innerHTML = `
           <div class="color-wrap">
-            <div class="chips" role="group" aria-label="Chọn tranh">${PICTURES.map((p) =>
-              `<button type="button" class="chip" data-pic="${p.id}" aria-pressed="${p.id === picId}">${p.emoji} ${p.name}</button>`).join("")}</div>
+            <div class="progress"><span style="width:${(p / set.length) * 100}%"></span></div>
+            <div class="q-count">Tranh ${p + 1}/${set.length} · ${pic.emoji} ${esc(pic.name)}</div>
             <svg class="pic" viewBox="0 0 300 240" role="img" aria-label="Tranh ${esc(pic.name)} để tô màu">
               ${shapes.map((s, i) => `<g class="region" data-i="${i}"><${s[0]} ${attrs(s[1])} fill="#fff" stroke="#3a3a3a" stroke-width="2" stroke-linejoin="round"/></g>`).join("")}
               <g>${shapes.map((s) => `<text x="${s[3][0]}" y="${s[3][1]}" font-size="${s[3][2] || 13}">${s[2]}</text>`).join("")}</g>
@@ -203,7 +241,6 @@
             <p class="color-msg" role="status"></p>
             <div class="palette" role="group" aria-label="Bảng màu">${shuffle(palette).map((c) =>
               `<button type="button" class="swatch" data-color="${c}" aria-pressed="false"><span class="dot" style="background:${COLORS[c]}" aria-hidden="true"></span>${c}</button>`).join("")}</div>
-            <div class="actions" style="margin-top:4px"><button type="button" class="btn btn-soft" data-reset>Tô lại</button></div>
           </div>`;
         const msg = el.querySelector(".color-msg");
         msg.textContent = "Chọn màu bên dưới, rồi chạm vào ô có tên màu đó.";
@@ -212,7 +249,7 @@
           const b = e.target.closest("[data-color]"); if (!b) return;
           color = b.dataset.color;
           el.querySelectorAll(".swatch").forEach((x) => x.setAttribute("aria-pressed", x === b));
-          msg.className = "color-msg"; msg.textContent = `Bé đang chọn màu: ${color}`;
+          msg.className = "color-msg"; msg.style.color = ""; msg.textContent = `Bé đang chọn màu: ${color}`;
           App.speak(color, "en-US");
         });
         el.querySelector(".pic").addEventListener("click", (e) => {
@@ -224,12 +261,10 @@
             g.firstElementChild.setAttribute("fill", COLORS[color]);
             msg.className = "color-msg"; msg.style.color = "var(--ok)"; msg.textContent = App.pick(App.PRAISE);
             App.sfx(true);
-            if (done === shapes.length) setTimeout(() => {
-              const right = mistakes.filter((m) => m === 0).length;
-              App.finish(el, { score: right, total: shapes.length, text: `Bé tô đúng ngay lần đầu <b>${right}/${shapes.length}</b> ô.`, again: start, renew: () => {
-                picId = PICTURES[(PICTURES.findIndex((p) => p.id === picId) + 1) % PICTURES.length].id; start();
-              } });
-            }, 900);
+            if (done === shapes.length) {
+              right += mistakes.filter((m) => m === 0).length; total += shapes.length;
+              setTimeout(() => { p++; draw(); }, 1100);
+            }
           } else {
             mistakes[i]++;
             g.classList.remove("shake"); void g.getBBox(); g.classList.add("shake");
@@ -237,10 +272,8 @@
             App.sfx(false);
           }
         });
-        el.querySelector("[data-reset]").addEventListener("click", start);
-        el.querySelector(".chips").addEventListener("click", (e) => { const b = e.target.closest("[data-pic]"); if (b) { picId = b.dataset.pic; start(); } });
       }
-      start();
+      renew();
     }
   });
 })();

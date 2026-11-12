@@ -43,7 +43,7 @@
 
   register({
     id: "to-nho", subject: "toan", name: "To nhất, nhỏ nhất", emoji: "🐘",
-    desc: "Chọn con vật, trái cây, rau củ to nhất hoặc nhỏ nhất", ages: [0],
+    desc: "Chọn con vật, trái cây, rau củ to nhất hoặc nhỏ nhất", ages: [0, 1],
     mount(el) {
       quiz(el, {
         autoSay: true,
@@ -71,7 +71,7 @@
   // ---------- Cộng trừ (phiếu bài tập) ----------
   register({
     id: "cong-tru", subject: "toan", name: "Cộng trừ", emoji: "➕",
-    desc: "Điền kết quả vào ô trống như phiếu bài tập", ages: [1, 2, 3],
+    desc: "Điền kết quả vào ô trống như phiếu bài tập", ages: [2, 3],
     mount(el, ctx) {
       const MAX = [5, 5, 10, 20][ctx.age], COUNT = App.ROUNDS, wide = MAX > 9;
       let mode = "mix", problems = [];
