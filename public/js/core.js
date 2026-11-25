@@ -196,11 +196,26 @@
   // Luôn App.ROUNDS câu mỗi lượt. opts.make(i) returns { prompt, options: [{ html, ok }], say?: [text, lang], after?: [text, lang], optClass? }
   App.quiz = (el, opts, saved) => {
     const total = App.ROUNDS, rounds = saved || [];
-    let i = 0, score = 0, round, firstTry, locked;
+    let i = 0, score = 0, round, firstTry, locked, hintT;
     const box = document.createElement("div");
     el.innerHTML = ""; el.appendChild(box);
 
+    // opts.hint = số ms: bé chưa chọn đúng sau khoảng đó thì hiện bàn tay chỉ vào đáp án (câu đó không tính là đúng ngay lần đầu)
+    function armHint() {
+      clearTimeout(hintT);
+      if (!opts.hint) return;
+      hintT = setTimeout(() => {
+        if (!box.isConnected || locked) return;
+        const k = round.options.findIndex((o) => o.ok), b = box.querySelector(`.opt[data-k="${k}"]`);
+        if (!b) return;
+        firstTry = false;
+        b.classList.add("hinted");
+        b.insertAdjacentHTML("beforeend", '<span class="hint-hand" aria-hidden="true">👆</span>');
+      }, opts.hint);
+    }
+
     function next() {
+      clearTimeout(hintT);
       if (i >= total) return App.finish(el, { score, total, again: () => App.quiz(el, opts, rounds), renew: () => App.quiz(el, opts) });
       round = rounds[i] || (rounds[i] = opts.make(i)); firstTry = true; locked = false;
       box.innerHTML = `
@@ -212,6 +227,7 @@
           <p class="q-feedback" role="status"></p>
         </div>`;
       if (round.say && opts.autoSay) App.speak(...round.say);
+      armHint();
     }
 
     box.addEventListener("click", (e) => {
@@ -220,7 +236,7 @@
       if (!b || locked || b.disabled) return;
       const fb = box.querySelector(".q-feedback");
       if (round.options[+b.dataset.k].ok) {
-        locked = true; if (firstTry) score++;
+        locked = true; clearTimeout(hintT); if (firstTry) score++;
         b.classList.add("ok"); fb.className = "q-feedback ok"; fb.textContent = App.pick(App.PRAISE);
         App.sfx(true); if (round.after) setTimeout(() => App.speak(...round.after), 250);
         setTimeout(() => { i++; next(); }, 1100);

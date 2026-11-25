@@ -188,6 +188,229 @@
   opTopic("tru-5", "Trừ trong phạm vi 5", "➖", "-", 5);
   opTopic("tru-10", "Trừ trong phạm vi 10", "➖", "-", 10);
 
+  // ---------- Điền số thích hợp (dãy số liên tiếp, 4–6 tuổi) ----------
+  // Mỗi lượt 3 dãy, mỗi dãy 6 thẻ số đếm tiến hoặc đếm lùi, có 2 thẻ "?" để bé điền.
+  // Ô trống không bao giờ là thẻ đầu và không đứng cạnh nhau, nên luôn còn 2 số liền nhau để bé biết dãy tăng hay giảm.
+  register({
+    id: "dien-so", subject: "toan", name: "Điền số thích hợp", emoji: "🔢",
+    desc: "Điền số còn thiếu vào dãy số đếm tiến, đếm lùi", ages: [2, 3],
+    mount(el, ctx) {
+      const LEN = 6, COUNT = 3, BLANKS = [[1, 3], [1, 4], [1, 5], [2, 4], [2, 5], [3, 5]];
+      let max = ctx.age === 3 ? 20 : 10, rows = [];
+      el.innerHTML = `
+        <h2 class="game-title">Điền số thích hợp</h2>
+        <p class="hint">Điền số còn thiếu vào thẻ có dấu ?</p>
+        <div class="chips" role="group" aria-label="Phạm vi số">
+          <button type="button" class="chip" data-max="10" aria-pressed="${max === 10}">Phạm vi 10</button>
+          <button type="button" class="chip" data-max="20" aria-pressed="${max === 20}">Phạm vi 20</button>
+        </div>
+        <div class="seq-list"></div>
+        <p class="result" role="status"></p>
+        <div class="actions">
+          <button type="button" class="btn btn-main" data-check>Kiểm tra</button>
+          <button type="button" class="btn btn-soft" data-replay>🔁 Chơi lại</button>
+          <button type="button" class="btn btn-soft" data-new>▶️ Chơi tiếp</button>
+        </div>`;
+      const list = el.querySelector(".seq-list"), result = el.querySelector(".result");
+
+      function newSheet() {
+        // Phạm vi 20 chỉ lấy dãy có số lớn hơn 10 (phần nhỏ hơn đã có ở phạm vi 10)
+        const lo = max === 20 ? 12 - LEN : 0, starts = [];
+        for (let s = lo; s + LEN - 1 <= max; s++) starts.push(s);
+        const dirs = App.shuffle([1, -1, pick([1, -1])]); // luôn có cả dãy đếm tiến và đếm lùi
+        rows = App.sample(starts, COUNT).map((s, k) => {
+          const nums = Array.from({ length: LEN }, (_, j) => s + j);
+          return { nums: dirs[k] < 0 ? nums.reverse() : nums, blanks: pick(BLANKS) };
+        });
+        draw();
+      }
+      function draw() {
+        list.innerHTML = rows.map((r, i) =>
+          `<div class="seq" data-i="${i}" role="group" aria-label="Dãy số ${i + 1}">` +
+          r.nums.map((n, j) => r.blanks.includes(j)
+            ? `<label class="seq-card seq-slot"><input type="text" class="seq-in" inputmode="numeric" autocomplete="off" maxlength="2" placeholder=" " data-j="${j}" aria-label="Số thứ ${j + 1}"><span aria-hidden="true">?</span></label>`
+            : `<span class="seq-card">${n}</span>`).join("") +
+          `<span class="mark" aria-hidden="true"></span></div>`).join("");
+        result.textContent = "";
+      }
+      function check() {
+        let right = 0;
+        rows.forEach((r, i) => {
+          const row = list.querySelector(`.seq[data-i="${i}"]`);
+          let ok = true;
+          row.querySelectorAll(".seq-in").forEach((inp) => {
+            const good = inp.value !== "" && +inp.value === r.nums[+inp.dataset.j];
+            inp.classList.toggle("ok", good); inp.classList.toggle("bad", !good);
+            if (!good) ok = false;
+          });
+          row.querySelector(".mark").textContent = ok ? "✓" : "✗";
+          row.classList.toggle("ok", ok); row.classList.toggle("bad", !ok);
+          if (ok) right++;
+        });
+        result.textContent = right === COUNT ? `Tuyệt vời! Bé điền đúng cả ${COUNT} dãy số 🎉` : `Bé làm đúng ${right}/${COUNT} dãy. Sửa lại các ô màu đỏ nhé!`;
+        App.sfx(right === COUNT);
+        if (right === COUNT) App.celebrate();
+      }
+
+      list.addEventListener("input", (e) => {
+        const t = e.target; t.value = t.value.replace(/\D/g, "");
+        t.classList.remove("ok", "bad");
+        const row = t.closest(".seq"); row.classList.remove("ok", "bad"); row.querySelector(".mark").textContent = "";
+        if (t.value.length >= +t.maxLength) {
+          const all = [...list.querySelectorAll(".seq-in")], next = all[all.indexOf(t) + 1];
+          if (next) next.focus();
+        }
+      });
+      list.addEventListener("keydown", (e) => { if (e.key === "Enter") check(); });
+      el.querySelector("[data-check]").addEventListener("click", check);
+      el.querySelector("[data-new]").addEventListener("click", newSheet);
+      el.querySelector("[data-replay]").addEventListener("click", draw);
+      el.querySelector(".chips").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-max]"); if (!b) return;
+        max = +b.dataset.max;
+        el.querySelectorAll("[data-max]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+        newSheet();
+      });
+      newSheet();
+    }
+  });
+
+  // ---------- Thêm bánh lên đĩa (4–6 tuổi) ----------
+  // Đĩa có sẵn k cái bánh, bé chọn nhóm bánh cần thêm để đĩa có đủ N cái. Sau 7 giây chưa chọn đúng thì có bàn tay gợi ý.
+  const TREATS = [["🍪", "cái bánh quy"], ["🍩", "cái bánh rán"], ["🧁", "cái bánh kem"], ["🥐", "cái bánh sừng bò"], ["🍓", "quả dâu"], ["🍊", "quả quýt"]];
+  register({
+    id: "them-banh", subject: "toan", name: "Thêm bánh lên đĩa", emoji: "🍪",
+    desc: "Chọn số bánh cần thêm để đĩa có đủ số bánh", ages: [2, 3],
+    mount(el, ctx) {
+      const nOpt = ctx.age === 3 ? 3 : 2, maxAdd = ctx.age === 3 ? 5 : 4, LETTERS = "ABC";
+      let seen;
+      quiz(el, {
+        autoSay: true, hint: 7000,
+        make(i) {
+          if (i === 0) seen = new Set();
+          let k, n, guard = 0;
+          do { n = rand(4, 10); k = rand(Math.max(1, n - maxAdd), n - 1); } while (seen.has(k + "/" + n) && guard++ < 100);
+          seen.add(k + "/" + n);
+          const [em, name] = pick(TREATS), add = n - k;
+          const vals = App.shuffle(App.numOptions(add, 1, maxAdd, nOpt));
+          return {
+            prompt: `<p class="q-text">Cho thêm vào đĩa để trên đĩa có <b>${n}</b> ${name}</p>` +
+              `<div class="plate" role="img" aria-label="Trên đĩa có ${k} ${name}">${`<span>${em}</span>`.repeat(k)}</div>`,
+            say: [`Cho thêm vào đĩa để trên đĩa có ${n} ${name}`, "vi-VN"],
+            after: [`${k} thêm ${add} là ${n}`, "vi-VN"], optClass: "pic-opts treat-opts",
+            options: vals.map((v, j) => ({
+              html: `<span class="opt-letter">${LETTERS[j]}.</span><span class="treat-grp" aria-label="${v} ${name}">${em.repeat(v)}</span>`,
+              ok: v === add
+            }))
+          };
+        }
+      });
+    }
+  });
+
+  // ---------- Đếm và điền số (4–6 tuổi) ----------
+  // Mỗi lượt 3 bức tranh. Bé đếm từng loại trong tranh rồi điền số. Tranh được xếp ngẫu nhiên theo vùng (trời / đất / nước).
+  // Bé 5–6 tuổi đôi khi gặp một loại KHÔNG có trong tranh (đáp án 0), như chú chim trong sách.
+  const SCENES = [
+    { bg: "pond", zones: { sky: [0, 2, 100, 28], land: [0, 30, 100, 58], water: [4, 60, 96, 97] },
+      items: [["☀️", "ông mặt trời", "sky", 1], ["☁️", "đám mây", "sky"], ["🌳", "cái cây", "land"], ["🐰", "chú thỏ", "land"], ["🦆", "con vịt", "water"]],
+      absent: [["🐦", "con chim"], ["🐸", "con ếch"]] },
+    { bg: "garden", zones: { sky: [0, 2, 100, 40], land: [0, 44, 100, 97] },
+      items: [["🦋", "con bướm", "sky"], ["🐝", "con ong", "sky"], ["🌻", "bông hoa", "land"], ["🍄", "cây nấm", "land"], ["🐌", "con ốc sên", "land"]],
+      absent: [["🐞", "con bọ rùa"], ["🐛", "con sâu"]] },
+    { bg: "sea", zones: { sky: [0, 2, 100, 26], land: [0, 80, 100, 98], water: [0, 30, 100, 78] },
+      items: [["☁️", "đám mây", "sky"], ["🐟", "con cá", "water"], ["🐙", "con bạch tuộc", "water"], ["🦀", "con cua", "land"], ["🐚", "vỏ ốc", "land"]],
+      absent: [["🐢", "con rùa"], ["🐬", "cá heo"]] },
+    { bg: "night", zones: { sky: [0, 2, 100, 50], land: [0, 56, 100, 97] },
+      items: [["🌙", "mặt trăng", "sky", 1], ["⭐", "ngôi sao", "sky"], ["🏠", "ngôi nhà", "land"], ["🌲", "cây thông", "land"], ["🦉", "con cú", "land"]],
+      absent: [["🐱", "con mèo"], ["☀️", "ông mặt trời"]] },
+    { bg: "farm", zones: { sky: [0, 2, 100, 28], land: [0, 32, 100, 97] },
+      items: [["☁️", "đám mây", "sky"], ["🐔", "con gà", "land"], ["🐄", "con bò", "land"], ["🐷", "con lợn", "land"], ["🌾", "bó lúa", "land"]],
+      absent: [["🐶", "con chó"], ["🐴", "con ngựa"]] }
+  ];
+  register({
+    id: "dem-dien", subject: "toan", name: "Đếm và điền số", emoji: "🦆",
+    desc: "Đếm từng loại trong tranh rồi điền số", ages: [2, 3],
+    mount(el, ctx) {
+      const COUNT = 3, nAsk = ctx.age === 3 ? 5 : 4, maxN = ctx.age === 3 ? 10 : 7;
+      const CELL_W = 10, CELL_H = 11; // ô lưới theo % khung tranh, mỗi ô tối đa 1 hình
+
+      function cellsOf([x1, y1, x2, y2]) {
+        const cols = Math.floor((x2 - x1) / CELL_W), rows = Math.floor((y2 - y1) / CELL_H), out = [];
+        const dx = (x2 - x1) / cols, dy = (y2 - y1) / rows;
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) out.push([x1 + dx * (c + 0.5), y1 + dy * (r + 0.5), dx, dy]);
+        return out;
+      }
+      function makeScene(sc) {
+        const free = {}; for (const z in sc.zones) free[z] = App.shuffle(cellsOf(sc.zones[z]));
+        // chọn các loại: luôn giữ loại có số cố định (mặt trời, mặt trăng) nếu có, còn lại ngẫu nhiên
+        const asks = App.sample(sc.items, nAsk).map(([em, name, zone, fixed]) => ({ em, name, zone, n: fixed || rand(1, maxN) }));
+        // không để vùng nào chật quá: giảm dần số lượng cho vừa số ô
+        for (const z in free) {
+          const inZone = asks.filter((a) => a.zone === z && a.n > 1);
+          while (inZone.length && asks.filter((a) => a.zone === z).reduce((s, a) => s + a.n, 0) > free[z].length) {
+            const big = inZone.reduce((m, a) => (a.n > m.n ? a : m)); big.n--;
+          }
+        }
+        const pics = [];
+        asks.forEach((a) => { for (let k = 0; k < a.n; k++) {
+          const [x, y, dx, dy] = free[a.zone].pop();
+          pics.push({ em: a.em, x: x + (Math.random() - 0.5) * dx * 0.35, y: y + (Math.random() - 0.5) * dy * 0.3 });
+        } });
+        if (ctx.age === 3 && Math.random() < 0.4) { const [em, name] = pick(sc.absent); asks[rand(1, asks.length - 1)] = { em, name, n: 0 }; }
+        return { bg: sc.bg, pics, asks };
+      }
+      function newSet() {
+        const order = App.sample(SCENES, COUNT);
+        play(order.map(makeScene));
+      }
+      function play(set) {
+        let b = 0, score = 0, firstTry;
+        function show() {
+          if (b >= COUNT) return App.finish(el, { score, total: COUNT, text: `Bé đếm đúng ngay lần đầu <b>${score}/${COUNT}</b> bức tranh.`,
+            again: () => play(set), renew: newSet });
+          const s = set[b]; firstTry = true;
+          el.innerHTML = `
+            <div class="quiz">
+              <div class="progress"><span style="width:${(b / COUNT) * 100}%"></span></div>
+              <div class="q-count">Bài ${b + 1}/${COUNT}</div>
+              <p class="q-text">Đếm và điền số thích hợp vào ô trống</p>
+              <div class="cnt-scene cnt-${s.bg}" role="img" aria-label="Bức tranh để đếm">
+                ${s.pics.map((p) => `<span style="left:${p.x.toFixed(1)}%;top:${p.y.toFixed(1)}%">${p.em}</span>`).join("")}
+              </div>
+              <div class="cnt-asks">${s.asks.map((a, i) =>
+                `<label class="cnt-ask" data-i="${i}"><input type="text" inputmode="numeric" autocomplete="off" maxlength="2" aria-label="Có bao nhiêu ${a.name}">` +
+                `<span class="cnt-em" aria-hidden="true">${a.em}</span></label>`).join("")}</div>
+              <p class="result" role="status"></p>
+              <div class="actions"><button type="button" class="btn btn-main" data-check>Kiểm tra</button></div>
+            </div>`;
+          const asks = el.querySelector(".cnt-asks"), result = el.querySelector(".result");
+          function check() {
+            let right = 0;
+            s.asks.forEach((a, i) => {
+              const row = asks.querySelector(`[data-i="${i}"]`), v = row.querySelector("input").value.trim(), ok = v !== "" && +v === a.n;
+              row.classList.toggle("ok", ok); row.classList.toggle("bad", !ok); if (ok) right++;
+            });
+            const all = right === s.asks.length;
+            App.sfx(all);
+            if (!all) { firstTry = false; result.className = "result bad"; result.textContent = "Bé đếm lại các ô màu đỏ nhé!"; return; }
+            if (firstTry) score++;
+            result.className = "result ok"; result.textContent = App.pick(App.PRAISE);
+            el.querySelector("[data-check]").disabled = true;
+            setTimeout(() => { b++; show(); }, 1300);
+          }
+          asks.addEventListener("input", (e) => {
+            const t = e.target; t.value = t.value.replace(/\D/g, ""); t.closest(".cnt-ask").classList.remove("ok", "bad");
+          });
+          asks.addEventListener("keydown", (e) => { if (e.key === "Enter") check(); });
+          el.querySelector("[data-check]").addEventListener("click", check);
+        }
+        show();
+      }
+      newSet();
+    }
+  });
+
   // ---------- So sánh ----------
   register({
     id: "so-sanh", subject: "toan", name: "So sánh số", emoji: "⚖️",
