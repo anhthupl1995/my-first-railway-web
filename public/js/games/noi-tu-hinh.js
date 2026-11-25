@@ -42,20 +42,22 @@
     return head + ch.slice(k, i).join("") + `<em>${ch.slice(i, j).join("")}</em>` + ch.slice(j).join("");
   };
 
-  // 6 trang, mỗi trang 6 từ khác nhau; ưu tiên từ ít xuất hiện để cả lượt đa dạng nhất có thể.
-  function makePages(pool) {
+  // `pages` trang, mỗi trang `per` từ khác nhau; ưu tiên từ ít xuất hiện để cả lượt đa dạng nhất có thể.
+  // Dùng chung với phiếu in "Nối từ với hình" (js/sheets/vietnamese.js).
+  App.wordPages = (pool, pages, per) => {
     const used = new Map();
-    return Array.from({ length: PAGES }, () => {
+    return Array.from({ length: pages }, () => {
       const page = [];
       for (const x of shuffle(pool).sort((a, b) => (used.get(a) || 0) - (used.get(b) || 0))) {
-        if (page.length === PER) break;
+        if (page.length === per) break;
         if (page.some((y) => y.pic === x.pic || (x.g && x.g === y.g))) continue;
         page.push(x);
       }
       page.forEach((x) => used.set(x, (used.get(x) || 0) + 1));
       return { words: page, order: App.derange(page.length) };
     });
-  }
+  };
+  const makePages = (pool) => App.wordPages(pool, PAGES, PER);
 
   const loadLevel = () => { try { const v = +localStorage.getItem(KEY); return LEVELS[v] ? v : 0; } catch (e) { return 0; } };
   const saveLevel = (v) => { try { localStorage.setItem(KEY, v); } catch (e) { /* storage blocked */ } };

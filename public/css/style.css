@@ -279,8 +279,13 @@ a.chip { text-decoration: none; }
 .tool-actions { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
 .tool-actions .btn { font-size: 16px; padding: 10px 16px; }
 @media (max-width: 520px) { .tool-actions .btn { flex: 1 1 100%; } }
+.tool-actions .btn:disabled { opacity: .7; cursor: progress; }
+.tool-hint { margin: 0; font-size: 15px; color: var(--muted); }
+.tool-status { margin: 0; font-weight: 700; color: #1A7A43; min-height: 0; }
+.tool-status:empty { display: none; }
 
 /* ---------- A4 page ---------- */
+.a4-pages { display: grid; gap: 24px; }
 .a4-wrap { width: 100%; overflow: hidden; }
 .a4 {
   width: 210mm; height: 297mm; margin: 0 auto; background: #fff; color: #222; transform-origin: top left;
@@ -304,6 +309,9 @@ a.chip { text-decoration: none; }
 .m-left { grid-column: 1; }
 .m-right { grid-column: 3; }
 .m-word { font-weight: 700; line-height: 1.1; }
+.m-word.upper { text-transform: uppercase; }
+.m-word b { font-weight: 800; color: #A4500E; }
+.m-word em { font-style: normal; color: #1B5FC1; }
 .m-label { font-size: 4.4mm; font-weight: 600; color: #444; line-height: 1.1; }
 .m-left::after, .m-right::before { content: ""; position: absolute; top: 50%; width: 3.2mm; height: 3.2mm; margin-top: -1.6mm; border-radius: 50%; background: #3A3A3A; }
 .m-left::after { right: -4.6mm; }
@@ -318,8 +326,10 @@ a.chip { text-decoration: none; }
   html, body { background: #fff; }
   .topbar, .tabbar, .site-footer, .no-print { display: none !important; }
   main { padding: 0; max-width: none; margin: 0; }
+  .a4-pages { display: block; }
   .a4-wrap { height: auto !important; overflow: visible; }
   .a4 { transform: none !important; box-shadow: none; margin: 0; break-after: page; }
+  .a4-wrap:last-child .a4 { break-after: auto; }
 }
 
 @keyframes pop { 50% { transform: scale(1.08); } }

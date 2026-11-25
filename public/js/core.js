@@ -25,6 +25,8 @@
   App.register = (t) => App.topics.push(t);
   App.topicsOf = (sid) => App.topics.filter((t) => t.subject === sid);
   // Printable A4 worksheets: { id, subject, name, emoji, desc, ages, options, thumb, generate(age, opt), render(data, age, opt) }
+  // render() trả về { title, instruction, tag?, pages: [html của từng trang] } – mỗi phiếu App.SHEET_PAGES trang.
+  App.SHEET_PAGES = 4;
   App.sheets = [];
   App.registerSheet = (s) => App.sheets.push(s);
   App.sheetsOf = (sid) => App.sheets.filter((s) => !sid || s.subject === sid);

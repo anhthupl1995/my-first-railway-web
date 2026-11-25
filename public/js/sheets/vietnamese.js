@@ -1,6 +1,7 @@
 // Phiếu in A4 – Tiếng Việt: các bài nối
+// Mỗi phiếu gồm App.SHEET_PAGES trang (4 trang), chia 4 cấp độ giống bài "Bé tập đọc".
 (function () {
-  const { sample } = App;
+  const PAGES = App.SHEET_PAGES;
 
   // ---------- Khung bảng nối dùng chung ----------
   const BODY_H = 190, BODY_W = 178, DOT = 59; // mm – phải khớp với CSS .match
@@ -21,63 +22,54 @@
     ? `<span style="font-size:${Math.min(d.boxH * 0.55, 24)}mm;line-height:1">${x.em}</span><small class="m-label">${x.name}</small>`
     : `<span style="font-size:${d.em}mm;line-height:1">${x.em}</span>`;
 
-  // ---------- Nối từ với hình (luyện đọc / phát âm) ----------
-  // [từ, hình (emoji hoặc số), mức độ: 1 = vần đơn giản, 2 = có âm cuối / phụ âm ghép, 3 = vần khó]
-  const IT = (arr) => arr.map(([w, pic, lvl]) => ({ w, pic, lvl }));
-  const THEMES = {
-    so: { name: "🔢 Số đếm", items: IT([["một", 1, 1], ["hai", 2, 1], ["ba", 3, 1], ["bốn", 4, 1], ["năm", 5, 1],
-      ["sáu", 6, 2], ["bảy", 7, 2], ["tám", 8, 2], ["chín", 9, 2], ["mười", 10, 2]]) },
-    convat: { name: "🐾 Con vật", items: IT([["cá", "🐟", 1], ["gà", "🐔", 1], ["bò", "🐄", 1], ["dê", "🐐", 1], ["hổ", "🐯", 1],
-      ["mèo", "🐱", 2], ["chó", "🐶", 2], ["voi", "🐘", 2], ["vịt", "🦆", 2], ["ong", "🐝", 2], ["rùa", "🐢", 2], ["cua", "🦀", 2],
-      ["thỏ", "🐰", 3], ["khỉ", "🐵", 3], ["ngựa", "🐴", 3], ["chim", "🐦", 3]]) },
-    dovat: { name: "🍎 Đồ vật & quả", items: IT([["xe", "🚗", 1], ["ô", "☂️", 1], ["mũ", "🧢", 1], ["bé", "👶", 1],
-      ["nhà", "🏠", 2], ["cam", "🍊", 2], ["kem", "🍦", 2], ["sao", "⭐", 2], ["nho", "🍇", 2], ["táo", "🍎", 2], ["bút", "✏️", 2],
-      ["cây", "🌳", 2], ["hoa", "🌸", 2], ["sách", "📖", 3], ["trăng", "🌙", 3], ["chuối", "🍌", 3], ["bánh", "🍰", 3], ["dừa", "🥥", 3]]) }
-  };
-  THEMES.tron = { name: "🎲 Trộn", items: [...THEMES.so.items, ...THEMES.convat.items, ...THEMES.dovat.items] };
+  // Chip "Cấp độ": giá trị là chỉ số cấp (chuỗi), title = mô tả cấp
+  const levelOption = (levels) => ({ key: "level", label: "Cấp độ", def: "0", choices: levels.map((L, i) => [String(i), L.name, L.desc]) });
 
+  // ---------- Nối từ với hình (luyện đọc) – 4 cấp độ dùng chung với "Bé tập đọc" ----------
+  const WL = App.WORD_LEVELS, PER = 6;
   App.registerSheet({
     id: "noi-tu-hinh", subject: "tieng-viet", name: "Nối từ với hình", emoji: "🔗",
-    desc: "Bé đọc to từng chữ rồi nối với hình đúng – luyện phát âm", ages: [1, 2, 3],
+    desc: `Bé đọc to từng chữ rồi nối với hình đúng – 4 cấp độ, mỗi phiếu ${PAGES} trang`, ages: [1, 2, 3],
     options: [
-      { key: "theme", label: "Chủ đề", def: "so", choices: ["so", "convat", "dovat", "tron"].map((k) => [k, THEMES[k].name]) },
+      levelOption(WL),
       { key: "case", label: "Kiểu chữ", def: "thuong", choices: [["thuong", "chữ thường"], ["hoa", "CHỮ HOA"]], keep: true }
     ],
     thumb: `<div class="thumb-match"><b>ba</b><i></i><span>3</span><b>cá</b><i></i><span>🐟</span><b>xe</b><i></i><span>🚗</span></div>`,
-    generate(age, opt) {
-      const n = { 1: 4, 2: 5, 3: 6 }[age], maxLvl = { 1: 1, 2: 2, 3: 3 }[age];
-      let pool = THEMES[opt.theme].items.filter((x) => x.lvl <= maxLvl);
-      if (pool.length < n) pool = THEMES[opt.theme].items;
-      return { words: sample(pool, n), order: App.derange(n) };
-    },
-    render({ words, order }, age, opt) {
-      const text = (w) => (opt.case === "hoa" ? w.toLocaleUpperCase("vi") : w);
+    generate(age, opt) { return App.wordPages(WL[+opt.level].items, PAGES, PER); },
+    render(pages, age, opt) {
+      const L = WL[+opt.level];
       return {
-        title: "NỐI TỪ VỚI HÌNH",
+        title: "NỐI TỪ VỚI HÌNH", tag: L.name,
         instruction: "Bé đọc to từng chữ ở cột bên trái, rồi kẻ đường nối với hình đúng ở cột bên phải.",
-        body: matchBody(words.length, order,
-          (i, d) => `<span class="m-word" style="font-size:${d.fs}mm">${text(words[i].w)}</span>`,
-          (i, d) => typeof words[i].pic === "number"
+        pages: pages.map(({ words, order }) => matchBody(words.length, order,
+          (i, d) => `<span class="m-word${opt.case === "hoa" ? " upper" : ""}" style="font-size:${d.fs}mm">${App.wordHtml(L, words[i].w)}</span>`,
+          (i, d) => /^\d+$/.test(words[i].pic)
             ? `<span class="pic-num" style="font-size:${d.em * 0.95}mm">${words[i].pic}</span>`
-            : `<span style="font-size:${d.em}mm;line-height:1">${words[i].pic}</span>`)
+            : `<span style="font-size:${d.em}mm;line-height:1">${words[i].pic}</span>`))
       };
     }
   });
 
   // ---------- Nối hình với hình: con vật – nơi ở / thức ăn (2–4 tuổi) ----------
+  // 4 cấp độ theo số cặp cần nối trên mỗi trang
+  const PIC_LEVELS = [3, 4, 5, 6].map((n, i) => ({ name: `Cấp ${i + 1}`, desc: `${n} cặp mỗi trang`, n }));
   const pictureSheet = (id, name, emoji, desc, key, title, instruction, thumb) => App.registerSheet({
-    id, subject: "tieng-viet", name, emoji, desc, ages: [0, 1],
-    options: [{ key: "names", label: "Tên dưới hình", def: "co", choices: [["co", "Có"], ["khong", "Không"]], keep: true }],
+    id, subject: "tieng-viet", name, emoji, desc: `${desc} – 4 cấp độ, mỗi phiếu ${PAGES} trang`, ages: [0, 1],
+    options: [
+      levelOption(PIC_LEVELS),
+      { key: "names", label: "Tên dưới hình", def: "co", choices: [["co", "Có"], ["khong", "Không"]], keep: true }
+    ],
     thumb,
-    generate(age) {
-      const n = age === 0 ? 3 : 4;
-      return { pairs: App.uniquePairs(App.DATA[key], n), order: App.derange(n) };
+    generate(age, opt) {
+      const n = PIC_LEVELS[+opt.level].n;
+      return Array.from({ length: PAGES }, () => ({ pairs: App.uniquePairs(App.DATA[key], n), order: App.derange(n) }));
     },
-    render({ pairs, order }, age, opt) {
+    render(pages, age, opt) {
       const names = opt.names === "co";
       return {
-        title, instruction,
-        body: matchBody(pairs.length, order, (i, d) => picture(pairs[i].l, d, names), (i, d) => picture(pairs[i].r, d, names))
+        title, instruction, tag: PIC_LEVELS[+opt.level].name,
+        pages: pages.map(({ pairs, order }) =>
+          matchBody(pairs.length, order, (i, d) => picture(pairs[i].l, d, names), (i, d) => picture(pairs[i].r, d, names)))
       };
     }
   });
