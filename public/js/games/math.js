@@ -189,89 +189,76 @@
   opTopic("tru-10", "Trừ trong phạm vi 10", "➖", "-", 10);
 
   // ---------- Điền số thích hợp (dãy số liên tiếp, 4–6 tuổi) ----------
-  // Mỗi lượt 3 dãy, mỗi dãy 6 thẻ số đếm tiến hoặc đếm lùi, có 2 thẻ "?" để bé điền.
+  // Mỗi lượt 3 câu, mỗi câu 1 dãy 6 thẻ số đếm tiến hoặc đếm lùi, có 2 thẻ "?" để bé điền.
   // Ô trống không bao giờ là thẻ đầu và không đứng cạnh nhau, nên luôn còn 2 số liền nhau để bé biết dãy tăng hay giảm.
   register({
     id: "dien-so", subject: "toan", name: "Điền số thích hợp", emoji: "🔢",
     desc: "Điền số còn thiếu vào dãy số đếm tiến, đếm lùi", ages: [2, 3],
     mount(el, ctx) {
       const LEN = 6, COUNT = 3, BLANKS = [[1, 3], [1, 4], [1, 5], [2, 4], [2, 5], [3, 5]];
-      let max = ctx.age === 3 ? 20 : 10, rows = [];
-      el.innerHTML = `
-        <h2 class="game-title">Điền số thích hợp</h2>
-        <p class="hint">Điền số còn thiếu vào thẻ có dấu ?</p>
-        <div class="chips" role="group" aria-label="Phạm vi số">
-          <button type="button" class="chip" data-max="10" aria-pressed="${max === 10}">Phạm vi 10</button>
-          <button type="button" class="chip" data-max="20" aria-pressed="${max === 20}">Phạm vi 20</button>
-        </div>
-        <div class="seq-list"></div>
-        <p class="result" role="status"></p>
-        <div class="actions">
-          <button type="button" class="btn btn-main" data-check>Kiểm tra</button>
-          <button type="button" class="btn btn-soft" data-replay>🔁 Chơi lại</button>
-          <button type="button" class="btn btn-soft" data-new>▶️ Chơi tiếp</button>
-        </div>`;
-      const list = el.querySelector(".seq-list"), result = el.querySelector(".result");
+      let max = ctx.age === 3 ? 20 : 10;
 
-      function newSheet() {
+      function newSet() {
         // Phạm vi 20 chỉ lấy dãy có số lớn hơn 10 (phần nhỏ hơn đã có ở phạm vi 10)
         const lo = max === 20 ? 12 - LEN : 0, starts = [];
         for (let s = lo; s + LEN - 1 <= max; s++) starts.push(s);
         const dirs = App.shuffle([1, -1, pick([1, -1])]); // luôn có cả dãy đếm tiến và đếm lùi
-        rows = App.sample(starts, COUNT).map((s, k) => {
+        play(App.sample(starts, COUNT).map((s, k) => {
           const nums = Array.from({ length: LEN }, (_, j) => s + j);
           return { nums: dirs[k] < 0 ? nums.reverse() : nums, blanks: pick(BLANKS) };
-        });
-        draw();
+        }));
       }
-      function draw() {
-        list.innerHTML = rows.map((r, i) =>
-          `<div class="seq" data-i="${i}" role="group" aria-label="Dãy số ${i + 1}">` +
-          r.nums.map((n, j) => r.blanks.includes(j)
-            ? `<label class="seq-card seq-slot"><input type="text" class="seq-in" inputmode="numeric" autocomplete="off" maxlength="2" placeholder=" " data-j="${j}" aria-label="Số thứ ${j + 1}"><span aria-hidden="true">?</span></label>`
-            : `<span class="seq-card">${n}</span>`).join("") +
-          `<span class="mark" aria-hidden="true"></span></div>`).join("");
-        result.textContent = "";
-      }
-      function check() {
-        let right = 0;
-        rows.forEach((r, i) => {
-          const row = list.querySelector(`.seq[data-i="${i}"]`);
-          let ok = true;
-          row.querySelectorAll(".seq-in").forEach((inp) => {
-            const good = inp.value !== "" && +inp.value === r.nums[+inp.dataset.j];
-            inp.classList.toggle("ok", good); inp.classList.toggle("bad", !good);
-            if (!good) ok = false;
+      function play(set) {
+        let b = 0, score = 0, firstTry;
+        function show() {
+          if (b >= COUNT) return App.finish(el, { score, total: COUNT, text: `Bé điền đúng ngay lần đầu <b>${score}/${COUNT}</b> dãy số.`,
+            again: () => play(set), renew: newSet });
+          const r = set[b]; firstTry = true;
+          el.innerHTML = `
+            <div class="quiz">
+              <div class="progress"><span style="width:${(b / COUNT) * 100}%"></span></div>
+              <div class="q-count">Câu ${b + 1}/${COUNT}</div>
+              <div class="chips" role="group" aria-label="Phạm vi số">
+                <button type="button" class="chip" data-max="10" aria-pressed="${max === 10}">Phạm vi 10</button>
+                <button type="button" class="chip" data-max="20" aria-pressed="${max === 20}">Phạm vi 20</button>
+              </div>
+              <p class="q-text">Điền số còn thiếu vào thẻ có dấu ?</p>
+              <div class="seq-list"><div class="seq" role="group" aria-label="Dãy số">${r.nums.map((n, j) => r.blanks.includes(j)
+                ? `<label class="seq-card seq-slot"><input type="text" class="seq-in" inputmode="numeric" autocomplete="off" maxlength="2" placeholder=" " data-j="${j}" aria-label="Số thứ ${j + 1}"><span aria-hidden="true">?</span></label>`
+                : `<span class="seq-card">${n}</span>`).join("")}</div></div>
+              <p class="result" role="status"></p>
+              <div class="actions"><button type="button" class="btn btn-main" data-check>Kiểm tra</button></div>
+            </div>`;
+          const list = el.querySelector(".seq-list"), result = el.querySelector(".result"), ins = [...list.querySelectorAll(".seq-in")];
+          function check() {
+            let ok = true;
+            ins.forEach((inp) => {
+              const good = inp.value !== "" && +inp.value === r.nums[+inp.dataset.j];
+              inp.classList.toggle("ok", good); inp.classList.toggle("bad", !good);
+              if (!good) ok = false;
+            });
+            App.sfx(ok);
+            if (!ok) { firstTry = false; result.className = "result bad"; result.textContent = "Chưa đúng rồi, bé sửa lại ô màu đỏ nhé!"; return; }
+            if (firstTry) score++;
+            result.className = "result ok"; result.textContent = App.pick(App.PRAISE);
+            el.querySelector("[data-check]").disabled = true;
+            setTimeout(() => { b++; show(); }, 1300);
+          }
+          list.addEventListener("input", (e) => {
+            const t = e.target; t.value = t.value.replace(/\D/g, ""); t.classList.remove("ok", "bad");
+            if (t.value.length >= 2) { const next = ins[ins.indexOf(t) + 1]; if (next) next.focus(); }
           });
-          row.querySelector(".mark").textContent = ok ? "✓" : "✗";
-          row.classList.toggle("ok", ok); row.classList.toggle("bad", !ok);
-          if (ok) right++;
-        });
-        result.textContent = right === COUNT ? `Tuyệt vời! Bé điền đúng cả ${COUNT} dãy số 🎉` : `Bé làm đúng ${right}/${COUNT} dãy. Sửa lại các ô màu đỏ nhé!`;
-        App.sfx(right === COUNT);
-        if (right === COUNT) App.celebrate();
-      }
-
-      list.addEventListener("input", (e) => {
-        const t = e.target; t.value = t.value.replace(/\D/g, "");
-        t.classList.remove("ok", "bad");
-        const row = t.closest(".seq"); row.classList.remove("ok", "bad"); row.querySelector(".mark").textContent = "";
-        if (t.value.length >= +t.maxLength) {
-          const all = [...list.querySelectorAll(".seq-in")], next = all[all.indexOf(t) + 1];
-          if (next) next.focus();
+          list.addEventListener("keydown", (e) => { if (e.key === "Enter") check(); });
+          el.querySelector("[data-check]").addEventListener("click", check);
+          el.querySelector(".chips").addEventListener("click", (e) => {
+            const c = e.target.closest("[data-max]"); if (!c || +c.dataset.max === max) return;
+            max = +c.dataset.max; newSet(); // đổi phạm vi thì bắt đầu lượt mới
+          });
+          ins[0].focus({ preventScroll: true });
         }
-      });
-      list.addEventListener("keydown", (e) => { if (e.key === "Enter") check(); });
-      el.querySelector("[data-check]").addEventListener("click", check);
-      el.querySelector("[data-new]").addEventListener("click", newSheet);
-      el.querySelector("[data-replay]").addEventListener("click", draw);
-      el.querySelector(".chips").addEventListener("click", (e) => {
-        const b = e.target.closest("[data-max]"); if (!b) return;
-        max = +b.dataset.max;
-        el.querySelectorAll("[data-max]").forEach((x) => x.setAttribute("aria-pressed", x === b));
-        newSheet();
-      });
-      newSheet();
+        show();
+      }
+      newSet();
     }
   });
 
